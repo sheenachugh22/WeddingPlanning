@@ -1,34 +1,50 @@
-const STORAGE_KEY = "northIndianWeddingPlannerStateV1";
+const STORAGE_KEY = "myWeddingJourneyStateV2";
 const SHARE_PARAM = "plan";
 
 const dom = {};
 let state = createDefaultState();
+let activeTab = "overview";
 
 document.addEventListener("DOMContentLoaded", () => {
   cacheDom();
   bindEvents();
   loadInitialState();
   renderAll();
+  updateCountdown();
+  setInterval(updateCountdown, 60000); // Update countdown every minute
 });
 
 function cacheDom() {
+  // Tab buttons
+  dom.tabBtns = document.querySelectorAll(".tab-btn");
+  dom.tabContents = document.querySelectorAll(".tab-content");
+  
+  // Header
+  dom.coupleNameDisplay = document.getElementById("coupleNameDisplay");
+  dom.shareBtn = document.getElementById("shareBtn");
+  
+  // Overview tab
+  dom.countdownDays = document.getElementById("countdownDays");
   dom.weddingMetaForm = document.getElementById("weddingMetaForm");
   dom.coupleNameInput = document.getElementById("coupleNameInput");
   dom.primaryVenueInput = document.getElementById("primaryVenueInput");
   dom.weddingDateInput = document.getElementById("weddingDateInput");
-  dom.sharePlanBtn = document.getElementById("sharePlanBtn");
-  dom.exportPlanBtn = document.getElementById("exportPlanBtn");
-  dom.importPlanBtn = document.getElementById("importPlanBtn");
-  dom.resetPlanBtn = document.getElementById("resetPlanBtn");
-  dom.importFileInput = document.getElementById("importFileInput");
+  dom.statGuestCount = document.getElementById("statGuestCount");
+  dom.statEventCount = document.getElementById("statEventCount");
+  dom.statTasksDone = document.getElementById("statTasksDone");
+  dom.statTasksTotal = document.getElementById("statTasksTotal");
+  dom.statBudget = document.getElementById("statBudget");
   dom.shareLinkOutput = document.getElementById("shareLinkOutput");
-  dom.statusMessage = document.getElementById("statusMessage");
+  dom.copyLinkBtn = document.getElementById("copyLinkBtn");
+  dom.resetPlanBtn = document.getElementById("resetPlanBtn");
 
+  // Guests tab
   dom.guestForm = document.getElementById("guestForm");
-  dom.guestTableBody = document.getElementById("guestTableBody");
+  dom.guestListContainer = document.getElementById("guestListContainer");
 
-  dom.eventSelect = document.getElementById("eventSelect");
+  // Events tab
   dom.addEventForm = document.getElementById("addEventForm");
+  dom.eventSelect = document.getElementById("eventSelect");
   dom.deleteEventBtn = document.getElementById("deleteEventBtn");
   dom.eventMetaForm = document.getElementById("eventMetaForm");
   dom.eventNameInput = document.getElementById("eventNameInput");
@@ -41,36 +57,60 @@ function cacheDom() {
   dom.applyTraditionalScenarioBtn = document.getElementById("applyTraditionalScenarioBtn");
   dom.inviteGuestList = document.getElementById("inviteGuestList");
 
+  // Planning tab
   dom.taskForm = document.getElementById("taskForm");
-  dom.taskTableBody = document.getElementById("taskTableBody");
+  dom.taskList = document.getElementById("taskList");
   dom.materialForm = document.getElementById("materialForm");
-  dom.materialTableBody = document.getElementById("materialTableBody");
+  dom.materialList = document.getElementById("materialList");
   dom.foodForm = document.getElementById("foodForm");
-  dom.foodTableBody = document.getElementById("foodTableBody");
+  dom.foodList = document.getElementById("foodList");
   dom.decorForm = document.getElementById("decorForm");
-  dom.decorTableBody = document.getElementById("decorTableBody");
+  dom.decorList = document.getElementById("decorList");
   dom.djForm = document.getElementById("djForm");
-  dom.djTableBody = document.getElementById("djTableBody");
+  dom.djList = document.getElementById("djList");
   dom.favorForm = document.getElementById("favorForm");
-  dom.favorTableBody = document.getElementById("favorTableBody");
+  dom.favorList = document.getElementById("favorList");
 
-  dom.globalSummary = document.getElementById("globalSummary");
-  dom.eventSummary = document.getElementById("eventSummary");
+  // Budget tab
+  dom.totalBudgetAmount = document.getElementById("totalBudgetAmount");
+  dom.eventBudgetList = document.getElementById("eventBudgetList");
+  dom.budgetMaterials = document.getElementById("budgetMaterials");
+  dom.budgetFood = document.getElementById("budgetFood");
+  dom.budgetDecor = document.getElementById("budgetDecor");
+  dom.budgetEntertainment = document.getElementById("budgetEntertainment");
+  dom.budgetFavors = document.getElementById("budgetFavors");
+
+  // Toast
+  dom.statusToast = document.getElementById("statusToast");
+  
+  // Modal
+  dom.shareModal = document.getElementById("shareModal");
+  dom.closeModal = document.getElementById("closeModal");
+  dom.modalShareLink = document.getElementById("modalShareLink");
+  dom.modalCopyBtn = document.getElementById("modalCopyBtn");
 }
 
 function bindEvents() {
+  // Tab navigation
+  dom.tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  });
+
+  // Header
+  dom.shareBtn.addEventListener("click", onShareClick);
+  
+  // Overview tab
   dom.weddingMetaForm.addEventListener("input", onWeddingMetaChanged);
-  dom.sharePlanBtn.addEventListener("click", onSharePlan);
-  dom.exportPlanBtn.addEventListener("click", onExportPlan);
-  dom.importPlanBtn.addEventListener("click", () => dom.importFileInput.click());
-  dom.importFileInput.addEventListener("change", onImportPlan);
+  dom.copyLinkBtn.addEventListener("click", onCopyLink);
   dom.resetPlanBtn.addEventListener("click", onResetPlan);
 
+  // Guests tab
   dom.guestForm.addEventListener("submit", onGuestAdd);
-  dom.guestTableBody.addEventListener("click", onGuestTableAction);
+  dom.guestListContainer.addEventListener("click", onGuestAction);
 
-  dom.eventSelect.addEventListener("change", onEventSelectionChanged);
+  // Events tab
   dom.addEventForm.addEventListener("submit", onEventAdd);
+  dom.eventSelect.addEventListener("change", onEventSelectionChanged);
   dom.deleteEventBtn.addEventListener("click", onEventDelete);
   dom.eventMetaForm.addEventListener("input", onEventMetaChanged);
   dom.inviteGroupFilter.addEventListener("change", renderInviteGuestList);
@@ -79,26 +119,149 @@ function bindEvents() {
   dom.applyTraditionalScenarioBtn.addEventListener("click", onApplyTraditionalScenario);
   dom.inviteGuestList.addEventListener("change", onInviteGuestToggle);
 
+  // Planning tab
   dom.taskForm.addEventListener("submit", onTaskAdd);
-  dom.taskTableBody.addEventListener("click", onTaskTableAction);
-  dom.taskTableBody.addEventListener("change", onTaskTableAction);
+  dom.taskList.addEventListener("click", onTaskAction);
 
   dom.materialForm.addEventListener("submit", onMaterialAdd);
-  dom.materialTableBody.addEventListener("click", onMaterialTableAction);
-  dom.materialTableBody.addEventListener("change", onMaterialTableAction);
+  dom.materialList.addEventListener("click", onMaterialAction);
 
   dom.foodForm.addEventListener("submit", onFoodAdd);
-  dom.foodTableBody.addEventListener("click", onFoodTableAction);
+  dom.foodList.addEventListener("click", onFoodAction);
 
   dom.decorForm.addEventListener("submit", onDecorAdd);
-  dom.decorTableBody.addEventListener("click", onDecorTableAction);
-  dom.decorTableBody.addEventListener("change", onDecorTableAction);
+  dom.decorList.addEventListener("click", onDecorAction);
 
   dom.djForm.addEventListener("submit", onDjAdd);
-  dom.djTableBody.addEventListener("click", onDjTableAction);
+  dom.djList.addEventListener("click", onDjAction);
 
   dom.favorForm.addEventListener("submit", onFavorAdd);
-  dom.favorTableBody.addEventListener("click", onFavorTableAction);
+  dom.favorList.addEventListener("click", onFavorAction);
+  
+  // Modal
+  if (dom.closeModal) {
+    dom.closeModal.addEventListener("click", closeShareModal);
+  }
+  if (dom.modalCopyBtn) {
+    dom.modalCopyBtn.addEventListener("click", onModalCopy);
+  }
+  if (dom.shareModal) {
+    dom.shareModal.addEventListener("click", (e) => {
+      if (e.target === dom.shareModal) closeShareModal();
+    });
+  }
+}
+
+// Tab switching
+function switchTab(tabName) {
+  activeTab = tabName;
+  
+  // Update tab buttons
+  dom.tabBtns.forEach(btn => {
+    if (btn.dataset.tab === tabName) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+  
+  // Update tab content
+  dom.tabContents.forEach(content => {
+    if (content.id === `tab-${tabName}`) {
+      content.classList.add("active");
+    } else {
+      content.classList.remove("active");
+    }
+  });
+}
+
+// Countdown calculator
+function updateCountdown() {
+  const weddingDate = state.meta.weddingDate;
+  if (!weddingDate) {
+    dom.countdownDays.textContent = "--";
+    return;
+  }
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const wedding = new Date(weddingDate);
+  wedding.setHours(0, 0, 0, 0);
+  
+  const diffTime = wedding - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) {
+    dom.countdownDays.textContent = "💕";
+  } else if (diffDays === 0) {
+    dom.countdownDays.textContent = "TODAY!";
+  } else {
+    dom.countdownDays.textContent = diffDays;
+  }
+}
+
+// Toast notification
+function showToast(message) {
+  dom.statusToast.textContent = message;
+  dom.statusToast.classList.add("show");
+  setTimeout(() => {
+    dom.statusToast.classList.remove("show");
+  }, 3000);
+}
+
+// Share modal
+function onShareClick() {
+  const shareUrl = buildShareUrl();
+  dom.shareLinkOutput.value = shareUrl;
+  if (dom.modalShareLink) {
+    dom.modalShareLink.value = shareUrl;
+  }
+  if (dom.shareModal) {
+    dom.shareModal.classList.add("show");
+  }
+}
+
+function closeShareModal() {
+  if (dom.shareModal) {
+    dom.shareModal.classList.remove("show");
+  }
+}
+
+function onCopyLink() {
+  const shareUrl = buildShareUrl();
+  copyToClipboard(shareUrl);
+}
+
+function onModalCopy() {
+  const shareUrl = buildShareUrl();
+  copyToClipboard(shareUrl);
+}
+
+async function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("Link copied to clipboard!");
+      closeShareModal();
+      return;
+    } catch (error) {
+      console.error("Clipboard write failed:", error);
+    }
+  }
+  
+  // Fallback
+  const input = dom.shareLinkOutput || dom.modalShareLink;
+  if (input) {
+    input.focus();
+    input.select();
+    try {
+      document.execCommand('copy');
+      showToast("Link copied!");
+      closeShareModal();
+    } catch (error) {
+      showToast("Please copy the link manually");
+    }
+  }
 }
 
 function createDefaultState() {
@@ -308,7 +471,7 @@ function loadInitialState() {
   if (fromUrl) {
     state = normalizeState(fromUrl);
     persistState();
-    setStatus("Loaded wedding plan from shared link.");
+    showToast("Wedding plan loaded from shared link");
     return;
   }
 
@@ -325,7 +488,7 @@ function loadInitialState() {
     console.error("Failed to parse local storage data:", error);
     state = createDefaultState();
     persistState();
-    setStatus("Stored data was corrupted. Reset to template.");
+    showToast("Data corrupted. Started fresh");
   }
 }
 
@@ -341,7 +504,7 @@ function readSharedStateFromUrl() {
     return JSON.parse(json);
   } catch (error) {
     console.error("Failed to parse shared state:", error);
-    setStatus("Shared link data was invalid. Continuing with local plan.");
+    showToast("Invalid shared link. Using local data");
     return null;
   }
 }
@@ -535,18 +698,20 @@ function persistState() {
 function renderAll() {
   ensureSelectedEvent();
   renderWeddingMeta();
-  renderGuestTable();
+  renderGuestList();
   renderEventSelect();
   renderEventMeta();
   renderInviteGuestList();
-  renderTaskTable();
-  renderMaterialTable();
-  renderFoodTable();
-  renderDecorTable();
-  renderDjTable();
-  renderFavorTable();
-  renderSummary();
+  renderTaskList();
+  renderMaterialList();
+  renderFoodList();
+  renderDecorList();
+  renderDjList();
+  renderFavorList();
+  renderStats();
+  renderBudget();
   renderShareLinkOutput();
+  updateCountdown();
 }
 
 function ensureSelectedEvent() {
@@ -566,25 +731,34 @@ function renderWeddingMeta() {
   dom.coupleNameInput.value = state.meta.coupleName || "";
   dom.primaryVenueInput.value = state.meta.primaryVenue || "";
   dom.weddingDateInput.value = state.meta.weddingDate || "";
+  
+  // Update header
+  if (dom.coupleNameDisplay) {
+    dom.coupleNameDisplay.textContent = state.meta.coupleName || "Your Special Day";
+  }
 }
 
-function renderGuestTable() {
+function renderGuestList() {
   if (!state.guests.length) {
-    dom.guestTableBody.innerHTML = `<tr><td colspan="6" class="muted">No guests yet.</td></tr>`;
+    dom.guestListContainer.innerHTML = `<div class="muted text-center">No guests yet. Add your first guest!</div>`;
     return;
   }
 
-  dom.guestTableBody.innerHTML = state.guests
+  dom.guestListContainer.innerHTML = state.guests
     .map(
       (guest) => `
-        <tr>
-          <td>${escapeHtml(guest.name)}</td>
-          <td>${formatGroupLabel(guest.group)}</td>
-          <td>${escapeHtml(guest.phone || "-")}</td>
-          <td>${escapeHtml(guest.dietary || "-")}</td>
-          <td>${escapeHtml(guest.notes || "-")}</td>
-          <td><button data-action="remove-guest" data-id="${guest.id}" type="button" class="danger">Remove</button></td>
-        </tr>
+        <div class="guest-card">
+          <div class="guest-info">
+            <h4>${escapeHtml(guest.name)}</h4>
+            <div class="guest-meta">
+              <span class="guest-badge">${formatGroupLabel(guest.group)}</span>
+              ${guest.phone ? `<span>📱 ${escapeHtml(guest.phone)}</span>` : ""}
+              ${guest.dietary ? `<span>🥗 ${escapeHtml(guest.dietary)}</span>` : ""}
+              ${guest.notes ? `<span>📝 ${escapeHtml(guest.notes)}</span>` : ""}
+            </div>
+          </div>
+          <button class="btn-remove" data-action="remove-guest" data-id="${guest.id}">Remove</button>
+        </div>
       `,
     )
     .join("");
@@ -644,243 +818,252 @@ function renderInviteGuestList() {
     .join("");
 }
 
-function renderTaskTable() {
+function renderTaskList() {
   const event = currentEvent();
   if (!event || !event.tasks.length) {
-    dom.taskTableBody.innerHTML = `<tr><td colspan="5" class="muted">No tasks added for this function.</td></tr>`;
+    dom.taskList.innerHTML = `<div class="muted text-center">No tasks yet</div>`;
     return;
   }
 
-  dom.taskTableBody.innerHTML = event.tasks
+  dom.taskList.innerHTML = event.tasks
     .map(
       (task) => `
-      <tr>
-        <td>${escapeHtml(task.title)}</td>
-        <td>${escapeHtml(task.owner || "-")}</td>
-        <td>
-          <select data-action="task-status" data-id="${task.id}">
-            <option value="pending" ${task.status === "pending" ? "selected" : ""}>Pending</option>
-            <option value="in_progress" ${task.status === "in_progress" ? "selected" : ""}>In Progress</option>
-            <option value="done" ${task.status === "done" ? "selected" : ""}>Done</option>
-          </select>
-        </td>
-        <td>${escapeHtml(task.deadline || "-")}</td>
-        <td><button type="button" class="danger" data-action="remove-task" data-id="${task.id}">Remove</button></td>
-      </tr>
+      <div class="tracker-item">
+        <div class="tracker-item-header">
+          <div class="tracker-item-title">${escapeHtml(task.title)}</div>
+          <button class="btn-icon" data-action="remove-task" data-id="${task.id}">✕</button>
+        </div>
+        <div class="tracker-item-meta">
+          ${task.owner ? `<span>👤 ${escapeHtml(task.owner)}</span>` : ""}
+          <span>${formatTaskStatus(task.status)}</span>
+          ${task.deadline ? `<span>📅 ${escapeHtml(task.deadline)}</span>` : ""}
+        </div>
+      </div>
     `,
     )
     .join("");
 }
 
-function renderMaterialTable() {
+function formatTaskStatus(status) {
+  const statusMap = {
+    pending: "⏳ To Do",
+    in_progress: "🔄 In Progress",
+    done: "✅ Done"
+  };
+  return statusMap[status] || status;
+}
+
+function renderMaterialList() {
   const event = currentEvent();
   if (!event || !event.materials.length) {
-    dom.materialTableBody.innerHTML = `<tr><td colspan="6" class="muted">No materials tracked for this function.</td></tr>`;
+    dom.materialList.innerHTML = `<div class="muted text-center">No materials yet</div>`;
     return;
   }
 
-  dom.materialTableBody.innerHTML = event.materials
+  dom.materialList.innerHTML = event.materials
     .map(
       (material) => `
-      <tr>
-        <td>${escapeHtml(material.item)}</td>
-        <td>${escapeHtml(String(material.qty))}</td>
-        <td>${escapeHtml(material.vendor || "-")}</td>
-        <td>
-          <select data-action="material-status" data-id="${material.id}">
-            <option value="pending" ${material.status === "pending" ? "selected" : ""}>Pending</option>
-            <option value="ordered" ${material.status === "ordered" ? "selected" : ""}>Ordered</option>
-            <option value="delivered" ${material.status === "delivered" ? "selected" : ""}>Delivered</option>
-          </select>
-        </td>
-        <td>${formatCurrency(material.cost)}</td>
-        <td><button type="button" class="danger" data-action="remove-material" data-id="${material.id}">Remove</button></td>
-      </tr>
+      <div class="tracker-item">
+        <div class="tracker-item-header">
+          <div class="tracker-item-title">${escapeHtml(material.item)}</div>
+          <button class="btn-icon" data-action="remove-material" data-id="${material.id}">✕</button>
+        </div>
+        <div class="tracker-item-meta">
+          <span>Qty: ${escapeHtml(String(material.qty))}</span>
+          ${material.vendor ? `<span>🏪 ${escapeHtml(material.vendor)}</span>` : ""}
+          <span>${formatMaterialStatus(material.status)}</span>
+          ${material.cost ? `<span>💰 ${formatCurrency(material.cost)}</span>` : ""}
+        </div>
+      </div>
     `,
     )
     .join("");
 }
 
-function renderFoodTable() {
+function formatMaterialStatus(status) {
+  const statusMap = {
+    pending: "⏳ Pending",
+    ordered: "📦 Ordered",
+    delivered: "✅ Delivered"
+  };
+  return statusMap[status] || status;
+}
+
+function renderFoodList() {
   const event = currentEvent();
   if (!event || !event.food.length) {
-    dom.foodTableBody.innerHTML = `<tr><td colspan="6" class="muted">No food items for this function yet.</td></tr>`;
+    dom.foodList.innerHTML = `<div class="muted text-center">No food items yet</div>`;
     return;
   }
 
-  dom.foodTableBody.innerHTML = event.food
+  dom.foodList.innerHTML = event.food
     .map(
       (food) => `
-      <tr>
-        <td>${escapeHtml(food.dish)}</td>
-        <td>${escapeHtml(food.course || "-")}</td>
-        <td>${escapeHtml(food.vendor || "-")}</td>
-        <td>${escapeHtml(String(food.servings || 0))}</td>
-        <td>${formatCurrency(food.cost)}</td>
-        <td><button type="button" class="danger" data-action="remove-food" data-id="${food.id}">Remove</button></td>
-      </tr>
+      <div class="tracker-item">
+        <div class="tracker-item-header">
+          <div class="tracker-item-title">${escapeHtml(food.dish)}</div>
+          <button class="btn-icon" data-action="remove-food" data-id="${food.id}">✕</button>
+        </div>
+        <div class="tracker-item-meta">
+          ${food.course ? `<span>${escapeHtml(food.course)}</span>` : ""}
+          ${food.vendor ? `<span>👨‍🍳 ${escapeHtml(food.vendor)}</span>` : ""}
+          ${food.servings ? `<span>🍽️ ${escapeHtml(String(food.servings))} servings</span>` : ""}
+          ${food.cost ? `<span>💰 ${formatCurrency(food.cost)}</span>` : ""}
+        </div>
+      </div>
     `,
     )
     .join("");
 }
 
-function renderDecorTable() {
+function renderDecorList() {
   const event = currentEvent();
   if (!event || !event.decor.length) {
-    dom.decorTableBody.innerHTML = `<tr><td colspan="6" class="muted">No decor entries for this function yet.</td></tr>`;
+    dom.decorList.innerHTML = `<div class="muted text-center">No decor items yet</div>`;
     return;
   }
 
-  dom.decorTableBody.innerHTML = event.decor
+  dom.decorList.innerHTML = event.decor
     .map(
       (decor) => `
-      <tr>
-        <td>${escapeHtml(decor.element)}</td>
-        <td>${escapeHtml(decor.vendor || "-")}</td>
-        <td>${escapeHtml(decor.theme || "-")}</td>
-        <td>
-          <select data-action="decor-status" data-id="${decor.id}">
-            <option value="pending" ${decor.status === "pending" ? "selected" : ""}>Pending</option>
-            <option value="approved" ${decor.status === "approved" ? "selected" : ""}>Approved</option>
-            <option value="ready" ${decor.status === "ready" ? "selected" : ""}>Ready</option>
-          </select>
-        </td>
-        <td>${formatCurrency(decor.cost)}</td>
-        <td><button type="button" class="danger" data-action="remove-decor" data-id="${decor.id}">Remove</button></td>
-      </tr>
+      <div class="tracker-item">
+        <div class="tracker-item-header">
+          <div class="tracker-item-title">${escapeHtml(decor.element)}</div>
+          <button class="btn-icon" data-action="remove-decor" data-id="${decor.id}">✕</button>
+        </div>
+        <div class="tracker-item-meta">
+          ${decor.vendor ? `<span>🎨 ${escapeHtml(decor.vendor)}</span>` : ""}
+          ${decor.theme ? `<span>🎭 ${escapeHtml(decor.theme)}</span>` : ""}
+          <span>${formatDecorStatus(decor.status)}</span>
+          ${decor.cost ? `<span>💰 ${formatCurrency(decor.cost)}</span>` : ""}
+        </div>
+      </div>
     `,
     )
     .join("");
 }
 
-function renderDjTable() {
+function formatDecorStatus(status) {
+  const statusMap = {
+    pending: "⏳ Pending",
+    approved: "👍 Approved",
+    ready: "✅ Ready"
+  };
+  return statusMap[status] || status;
+}
+
+function renderDjList() {
   const event = currentEvent();
   if (!event || !event.dj.length) {
-    dom.djTableBody.innerHTML = `<tr><td colspan="6" class="muted">No DJ/performance entries for this function yet.</td></tr>`;
+    dom.djList.innerHTML = `<div class="muted text-center">No entertainment items yet</div>`;
     return;
   }
 
-  dom.djTableBody.innerHTML = event.dj
+  dom.djList.innerHTML = event.dj
     .map(
       (dj) => `
-      <tr>
-        <td>${escapeHtml(dj.slot)}</td>
-        <td>${escapeHtml(dj.performer || "-")}</td>
-        <td>${escapeHtml(dj.type || "-")}</td>
-        <td>${escapeHtml(dj.notes || "-")}</td>
-        <td>${formatCurrency(dj.cost)}</td>
-        <td><button type="button" class="danger" data-action="remove-dj" data-id="${dj.id}">Remove</button></td>
-      </tr>
+      <div class="tracker-item">
+        <div class="tracker-item-header">
+          <div class="tracker-item-title">⏰ ${escapeHtml(dj.slot)}</div>
+          <button class="btn-icon" data-action="remove-dj" data-id="${dj.id}">✕</button>
+        </div>
+        <div class="tracker-item-meta">
+          ${dj.performer ? `<span>🎤 ${escapeHtml(dj.performer)}</span>` : ""}
+          ${dj.type ? `<span>${escapeHtml(dj.type)}</span>` : ""}
+          ${dj.notes ? `<span>📝 ${escapeHtml(dj.notes)}</span>` : ""}
+          ${dj.cost ? `<span>💰 ${formatCurrency(dj.cost)}</span>` : ""}
+        </div>
+      </div>
     `,
     )
     .join("");
 }
 
-function renderFavorTable() {
+function renderFavorList() {
   const event = currentEvent();
   if (!event || !event.favors.length) {
-    dom.favorTableBody.innerHTML = `<tr><td colspan="6" class="muted">No party favors configured for this function yet.</td></tr>`;
+    dom.favorList.innerHTML = `<div class="muted text-center">No favors yet</div>`;
     return;
   }
 
-  dom.favorTableBody.innerHTML = event.favors
+  dom.favorList.innerHTML = event.favors
     .map(
       (favor) => `
-      <tr>
-        <td>${escapeHtml(favor.item)}</td>
-        <td>${escapeHtml(String(favor.qty))}</td>
-        <td>${escapeHtml(favor.target || "-")}</td>
-        <td>${escapeHtml(favor.notes || "-")}</td>
-        <td>${formatCurrency(favor.cost)}</td>
-        <td><button type="button" class="danger" data-action="remove-favor" data-id="${favor.id}">Remove</button></td>
-      </tr>
+      <div class="tracker-item">
+        <div class="tracker-item-header">
+          <div class="tracker-item-title">${escapeHtml(favor.item)}</div>
+          <button class="btn-icon" data-action="remove-favor" data-id="${favor.id}">✕</button>
+        </div>
+        <div class="tracker-item-meta">
+          <span>Qty: ${escapeHtml(String(favor.qty))}</span>
+          ${favor.target ? `<span>🎯 ${escapeHtml(favor.target)}</span>` : ""}
+          ${favor.notes ? `<span>📝 ${escapeHtml(favor.notes)}</span>` : ""}
+          ${favor.cost ? `<span>💰 ${formatCurrency(favor.cost)}</span>` : ""}
+        </div>
+      </div>
     `,
     )
     .join("");
 }
 
-function renderSummary() {
-  const event = currentEvent();
+function renderStats() {
   const totalBudget = state.events.reduce((sum, item) => sum + eventCost(item), 0);
-  const totalInvites = state.events.reduce((sum, item) => sum + item.invitedGuestIds.length, 0);
-  const pendingTasks = state.events.reduce(
-    (sum, item) => sum + item.tasks.filter((task) => task.status !== "done").length,
+  const totalTasks = state.events.reduce((sum, item) => sum + item.tasks.length, 0);
+  const doneTasks = state.events.reduce(
+    (sum, item) => sum + item.tasks.filter((task) => task.status === "done").length,
     0,
   );
 
-  dom.globalSummary.innerHTML = `
-    <div class="summary-card">
-      <span>Total Guests</span>
-      <strong>${state.guests.length}</strong>
-    </div>
-    <div class="summary-card">
-      <span>Total Functions</span>
-      <strong>${state.events.length}</strong>
-    </div>
-    <div class="summary-card">
-      <span>Total Invite Slots</span>
-      <strong>${totalInvites}</strong>
-    </div>
-    <div class="summary-card">
-      <span>Open Tasks</span>
-      <strong>${pendingTasks}</strong>
-    </div>
-    <div class="summary-card">
-      <span>Planned Spend</span>
-      <strong>${formatCurrency(totalBudget)}</strong>
-    </div>
-  `;
+  dom.statGuestCount.textContent = state.guests.length;
+  dom.statEventCount.textContent = state.events.length;
+  dom.statTasksDone.textContent = doneTasks;
+  dom.statTasksTotal.textContent = totalTasks;
+  dom.statBudget.textContent = formatCurrency(totalBudget);
+}
 
-  if (!event) {
-    dom.eventSummary.innerHTML = "";
-    return;
-  }
-
-  const taskOpen = event.tasks.filter((task) => task.status !== "done").length;
-  const materialCost = event.materials.reduce((sum, item) => sum + sanitizeNumber(item.cost), 0);
-  const foodCost = event.food.reduce((sum, item) => sum + sanitizeNumber(item.cost), 0);
-  const decorCost = event.decor.reduce((sum, item) => sum + sanitizeNumber(item.cost), 0);
-  const djCost = event.dj.reduce((sum, item) => sum + sanitizeNumber(item.cost), 0);
-  const favorCost = event.favors.reduce((sum, item) => sum + sanitizeNumber(item.cost), 0);
-
-  dom.eventSummary.innerHTML = `
-    <div class="summary-card">
-      <span>Selected Function</span>
-      <strong>${escapeHtml(event.name)}</strong>
-    </div>
-    <div class="summary-card">
-      <span>Invited Guests</span>
-      <strong>${event.invitedGuestIds.length}</strong>
-    </div>
-    <div class="summary-card">
-      <span>Open Tasks</span>
-      <strong>${taskOpen}</strong>
-    </div>
-    <div class="summary-card">
-      <span>Materials Cost</span>
-      <strong>${formatCurrency(materialCost)}</strong>
-    </div>
-    <div class="summary-card">
-      <span>Food Cost</span>
-      <strong>${formatCurrency(foodCost)}</strong>
-    </div>
-    <div class="summary-card">
-      <span>Decor Cost</span>
-      <strong>${formatCurrency(decorCost)}</strong>
-    </div>
-    <div class="summary-card">
-      <span>DJ Cost</span>
-      <strong>${formatCurrency(djCost)}</strong>
-    </div>
-    <div class="summary-card">
-      <span>Favors Cost</span>
-      <strong>${formatCurrency(favorCost)}</strong>
-    </div>
-    <div class="summary-card">
-      <span>Total Function Cost</span>
-      <strong>${formatCurrency(eventCost(event))}</strong>
-    </div>
-  `;
+function renderBudget() {
+  const totalBudget = state.events.reduce((sum, item) => sum + eventCost(item), 0);
+  dom.totalBudgetAmount.textContent = formatCurrency(totalBudget);
+  
+  // Event budget breakdown
+  dom.eventBudgetList.innerHTML = state.events
+    .map(
+      (event) => `
+      <div class="event-budget-item">
+        <div class="event-budget-name">${escapeHtml(event.name)}</div>
+        <div class="event-budget-amount">${formatCurrency(eventCost(event))}</div>
+      </div>
+    `,
+    )
+    .join("");
+  
+  // Category budget breakdown
+  const materialsCost = state.events.reduce(
+    (sum, event) => sum + event.materials.reduce((s, item) => s + sanitizeNumber(item.cost), 0),
+    0
+  );
+  const foodCost = state.events.reduce(
+    (sum, event) => sum + event.food.reduce((s, item) => s + sanitizeNumber(item.cost), 0),
+    0
+  );
+  const decorCost = state.events.reduce(
+    (sum, event) => sum + event.decor.reduce((s, item) => s + sanitizeNumber(item.cost), 0),
+    0
+  );
+  const djCost = state.events.reduce(
+    (sum, event) => sum + event.dj.reduce((s, item) => s + sanitizeNumber(item.cost), 0),
+    0
+  );
+  const favorCost = state.events.reduce(
+    (sum, event) => sum + event.favors.reduce((s, item) => s + sanitizeNumber(item.cost), 0),
+    0
+  );
+  
+  dom.budgetMaterials.textContent = formatCurrency(materialsCost);
+  dom.budgetFood.textContent = formatCurrency(foodCost);
+  dom.budgetDecor.textContent = formatCurrency(decorCost);
+  dom.budgetEntertainment.textContent = formatCurrency(djCost);
+  dom.budgetFavors.textContent = formatCurrency(favorCost);
 }
 
 function renderShareLinkOutput() {
@@ -904,65 +1087,13 @@ function onWeddingMetaChanged() {
   saveAndRender();
 }
 
-async function onSharePlan() {
-  const shareUrl = buildShareUrl();
-  dom.shareLinkOutput.value = shareUrl;
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setStatus("Share link copied to clipboard.");
-      return;
-    } catch (error) {
-      console.error("Clipboard write failed:", error);
-    }
-  }
-
-  dom.shareLinkOutput.focus();
-  dom.shareLinkOutput.select();
-  setStatus("Share link ready. Copy it manually.");
-}
-
-function onExportPlan() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = "north-indian-wedding-plan.json";
-  anchor.click();
-  URL.revokeObjectURL(url);
-  setStatus("Wedding plan exported.");
-}
-
-function onImportPlan(event) {
-  const [file] = event.target.files || [];
-  if (!file) {
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const parsed = JSON.parse(String(reader.result || "{}"));
-      state = normalizeState(parsed);
-      saveAndRender("Wedding plan imported.");
-    } catch (error) {
-      console.error("Import failed:", error);
-      setStatus("Import failed. Please upload a valid JSON file.");
-    } finally {
-      dom.importFileInput.value = "";
-    }
-  };
-
-  reader.readAsText(file);
-}
 
 function onResetPlan() {
-  if (!window.confirm("Reset plan to default North Indian wedding template?")) {
+  if (!window.confirm("Start fresh with a new wedding plan? This will delete all your current data.")) {
     return;
   }
   state = createDefaultState();
-  saveAndRender("Template restored.");
+  saveAndRender("Fresh plan created");
 }
 
 function onGuestAdd(event) {
@@ -983,10 +1114,10 @@ function onGuestAdd(event) {
   });
 
   dom.guestForm.reset();
-  saveAndRender("Guest added.");
+  saveAndRender("Guest added");
 }
 
-function onGuestTableAction(event) {
+function onGuestAction(event) {
   const target = event.target;
   if (!(target instanceof HTMLElement)) {
     return;
@@ -1005,7 +1136,7 @@ function onGuestTableAction(event) {
   state.events.forEach((item) => {
     item.invitedGuestIds = item.invitedGuestIds.filter((id) => id !== guestId);
   });
-  saveAndRender("Guest removed.");
+  saveAndRender("Guest removed");
 }
 
 function onEventSelectionChanged() {
@@ -1039,12 +1170,12 @@ function onEventAdd(event) {
   state.events.push(newEvent);
   state.selectedEventId = newEvent.id;
   dom.addEventForm.reset();
-  saveAndRender("Function added.");
+  saveAndRender("Event added");
 }
 
 function onEventDelete() {
   if (state.events.length <= 1) {
-    setStatus("At least one function must exist.");
+    showToast("Need at least one event");
     return;
   }
 
@@ -1053,13 +1184,13 @@ function onEventDelete() {
     return;
   }
 
-  if (!window.confirm(`Delete function "${event.name}"?`)) {
+  if (!window.confirm(`Delete "${event.name}"?`)) {
     return;
   }
 
   state.events = state.events.filter((item) => item.id !== event.id);
   state.selectedEventId = state.events[0].id;
-  saveAndRender("Function deleted.");
+  saveAndRender("Event deleted");
 }
 
 function onEventMetaChanged() {
@@ -1087,7 +1218,7 @@ function onInviteFilteredGuests() {
     .map((guest) => guest.id);
 
   event.invitedGuestIds = Array.from(new Set([...event.invitedGuestIds, ...filtered]));
-  saveAndRender("Filtered guests invited.");
+  saveAndRender("Guests invited");
 }
 
 function onClearInvites() {
@@ -1096,7 +1227,7 @@ function onClearInvites() {
     return;
   }
   event.invitedGuestIds = [];
-  saveAndRender("Invites cleared for selected function.");
+  saveAndRender("Invites cleared");
 }
 
 function onApplyTraditionalScenario() {
@@ -1104,7 +1235,7 @@ function onApplyTraditionalScenario() {
   const sangeet = state.events.find((event) => event.name.toLowerCase().includes("sangeet"));
 
   if (!mehndi && !sangeet) {
-    setStatus("No Mehndi or Sangeet functions found.");
+    showToast("No Mehndi or Sangeet events found");
     return;
   }
 
@@ -1142,7 +1273,7 @@ function onApplyTraditionalScenario() {
     }
   }
 
-  saveAndRender("Traditional Mehndi + Sangeet scenario applied.");
+  saveAndRender("Auto-invite applied");
 }
 
 function onInviteGuestToggle(event) {
@@ -1187,10 +1318,10 @@ function onTaskAdd(event) {
   });
 
   dom.taskForm.reset();
-  saveAndRender("Task added.");
+  saveAndRender("Task added");
 }
 
-function onTaskTableAction(event) {
+function onTaskAction(event) {
   const target = event.target;
   if (!(target instanceof HTMLElement)) {
     return;
@@ -1208,17 +1339,7 @@ function onTaskTableAction(event) {
 
   if (action === "remove-task") {
     eventItem.tasks = eventItem.tasks.filter((task) => task.id !== id);
-    saveAndRender("Task removed.");
-    return;
-  }
-
-  if (action === "task-status" && target instanceof HTMLSelectElement) {
-    const item = eventItem.tasks.find((task) => task.id === id);
-    if (!item) {
-      return;
-    }
-    item.status = sanitizeTaskStatus(target.value);
-    saveAndRender();
+    saveAndRender("Task removed");
   }
 }
 
@@ -1245,10 +1366,10 @@ function onMaterialAdd(event) {
   });
 
   dom.materialForm.reset();
-  saveAndRender("Material added.");
+  saveAndRender("Material added");
 }
 
-function onMaterialTableAction(event) {
+function onMaterialAction(event) {
   const target = event.target;
   if (!(target instanceof HTMLElement)) {
     return;
@@ -1266,17 +1387,7 @@ function onMaterialTableAction(event) {
 
   if (action === "remove-material") {
     eventItem.materials = eventItem.materials.filter((material) => material.id !== id);
-    saveAndRender("Material removed.");
-    return;
-  }
-
-  if (action === "material-status" && target instanceof HTMLSelectElement) {
-    const item = eventItem.materials.find((material) => material.id === id);
-    if (!item) {
-      return;
-    }
-    item.status = sanitizeMaterialStatus(target.value);
-    saveAndRender();
+    saveAndRender("Material removed");
   }
 }
 
@@ -1303,10 +1414,10 @@ function onFoodAdd(event) {
   });
 
   dom.foodForm.reset();
-  saveAndRender("Food item added.");
+  saveAndRender("Food item added");
 }
 
-function onFoodTableAction(event) {
+function onFoodAction(event) {
   const target = event.target;
   if (!(target instanceof HTMLElement)) {
     return;
@@ -1322,7 +1433,7 @@ function onFoodTableAction(event) {
   }
 
   eventItem.food = eventItem.food.filter((food) => food.id !== id);
-  saveAndRender("Food item removed.");
+  saveAndRender("Food item removed");
 }
 
 function onDecorAdd(event) {
@@ -1348,10 +1459,10 @@ function onDecorAdd(event) {
   });
 
   dom.decorForm.reset();
-  saveAndRender("Decor item added.");
+  saveAndRender("Decor added");
 }
 
-function onDecorTableAction(event) {
+function onDecorAction(event) {
   const target = event.target;
   if (!(target instanceof HTMLElement)) {
     return;
@@ -1369,17 +1480,7 @@ function onDecorTableAction(event) {
 
   if (action === "remove-decor") {
     eventItem.decor = eventItem.decor.filter((decor) => decor.id !== id);
-    saveAndRender("Decor item removed.");
-    return;
-  }
-
-  if (action === "decor-status" && target instanceof HTMLSelectElement) {
-    const item = eventItem.decor.find((decor) => decor.id === id);
-    if (!item) {
-      return;
-    }
-    item.status = sanitizeDecorStatus(target.value);
-    saveAndRender();
+    saveAndRender("Decor item removed");
   }
 }
 
@@ -1406,10 +1507,10 @@ function onDjAdd(event) {
   });
 
   dom.djForm.reset();
-  saveAndRender("DJ/performance item added.");
+  saveAndRender("Entertainment added");
 }
 
-function onDjTableAction(event) {
+function onDjAction(event) {
   const target = event.target;
   if (!(target instanceof HTMLElement)) {
     return;
@@ -1425,7 +1526,7 @@ function onDjTableAction(event) {
   }
 
   eventItem.dj = eventItem.dj.filter((dj) => dj.id !== id);
-  saveAndRender("DJ/performance item removed.");
+  saveAndRender("Entertainment item removed");
 }
 
 function onFavorAdd(event) {
@@ -1451,10 +1552,10 @@ function onFavorAdd(event) {
   });
 
   dom.favorForm.reset();
-  saveAndRender("Favor item added.");
+  saveAndRender("Favor added");
 }
 
-function onFavorTableAction(event) {
+function onFavorAction(event) {
   const target = event.target;
   if (!(target instanceof HTMLElement)) {
     return;
@@ -1470,19 +1571,15 @@ function onFavorTableAction(event) {
   }
 
   eventItem.favors = eventItem.favors.filter((favor) => favor.id !== id);
-  saveAndRender("Favor item removed.");
+  saveAndRender("Favor removed");
 }
 
 function saveAndRender(statusText) {
   persistState();
   renderAll();
   if (statusText) {
-    setStatus(statusText);
+    showToast(statusText);
   }
-}
-
-function setStatus(message) {
-  dom.statusMessage.textContent = message;
 }
 
 function appendLine(base, line) {
