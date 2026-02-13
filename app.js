@@ -731,7 +731,7 @@ function renderWeddingMeta() {
   
   // Update header
   if (dom.coupleNameDisplay) {
-    dom.coupleNameDisplay.textContent = state.meta.coupleName || "Your Wedding Details";
+    dom.coupleNameDisplay.textContent = state.meta.coupleName || "Professional Event Management";
   }
 }
 
