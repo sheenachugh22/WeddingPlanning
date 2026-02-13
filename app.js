@@ -56,6 +56,10 @@ function cacheDom() {
 
   dom.globalSummary = document.getElementById("globalSummary");
   dom.eventSummary = document.getElementById("eventSummary");
+  
+  dom.navGuestCount = document.getElementById("navGuestCount");
+  dom.navEventCount = document.getElementById("navEventCount");
+  dom.navBudget = document.getElementById("navBudget");
 }
 
 function bindEvents() {
@@ -807,6 +811,17 @@ function renderSummary() {
     (sum, item) => sum + item.tasks.filter((task) => task.status !== "done").length,
     0,
   );
+
+  // Update navbar stats
+  if (dom.navGuestCount) {
+    dom.navGuestCount.textContent = state.guests.length;
+  }
+  if (dom.navEventCount) {
+    dom.navEventCount.textContent = state.events.length;
+  }
+  if (dom.navBudget) {
+    dom.navBudget.textContent = formatCurrency(totalBudget);
+  }
 
   dom.globalSummary.innerHTML = `
     <div class="summary-card">

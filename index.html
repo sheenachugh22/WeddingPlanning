@@ -13,87 +13,109 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="nav-bar">
+      <div class="nav-content">
+        <div class="logo">
+          <span class="logo-icon">💕</span>
+          <span class="logo-text">Wedding Bliss</span>
+        </div>
+        <div class="nav-stats">
+          <div class="stat-pill">
+            <span class="stat-icon">👥</span>
+            <span id="navGuestCount">0</span> Guests
+          </div>
+          <div class="stat-pill">
+            <span class="stat-icon">🎊</span>
+            <span id="navEventCount">0</span> Events
+          </div>
+          <div class="stat-pill">
+            <span class="stat-icon">💰</span>
+            <span id="navBudget">₹0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <main class="app-shell">
-      <header class="hero">
-        <h1>💕 North Indian Wedding Planning Application ✨</h1>
-        <p>
-          Plan every ceremony to the dot: guests, materials, food, decor, DJ, favors, and tasks
-          for Engagement, Haldi, Mehndi, Sangeet, Wedding, and beyond. Make your dream wedding a reality! 🎊
-        </p>
-        <div class="hero-chips">
-          <span>👥 Guest Intelligence</span>
-          <span>📅 Function Planning</span>
-          <span>💰 Budget Tracking</span>
-          <span>🔗 Shareable Link</span>
+      <header class="welcome-banner">
+        <div class="welcome-content">
+          <h1>✨ Your Dream Wedding Starts Here ✨</h1>
+          <p>Plan every magical moment from Engagement to the big day. Track guests, budget, tasks, and more!</p>
+        </div>
+        <div class="welcome-actions">
+          <button id="sharePlanBtn" type="button" class="btn-primary">
+            <span class="btn-icon">🔗</span> Share Plan
+          </button>
+          <button id="exportPlanBtn" type="button" class="btn-secondary">
+            <span class="btn-icon">💾</span> Export
+          </button>
+          <button id="importPlanBtn" type="button" class="btn-secondary">
+            <span class="btn-icon">📂</span> Import
+          </button>
+          <input id="importFileInput" type="file" accept="application/json" hidden />
         </div>
       </header>
 
-      <section class="panel panel-overview">
-        <h2>💒 Wedding Overview</h2>
-        <form id="weddingMetaForm" class="grid-form three-col">
-          <label>
-            Couple Name
-            <input id="coupleNameInput" type="text" placeholder="Aarav & Anaya" required />
-          </label>
-          <label>
-            Primary Venue
-            <input id="primaryVenueInput" type="text" placeholder="Royal Palace Lawn" required />
-          </label>
-          <label>
-            Wedding Date
-            <input id="weddingDateInput" type="date" required />
-          </label>
-        </form>
-
-        <div class="action-row">
-          <button id="sharePlanBtn" type="button">🔗 Copy Share Link</button>
-          <button id="exportPlanBtn" type="button">💾 Export JSON</button>
-          <button id="importPlanBtn" type="button">📂 Import JSON</button>
-          <button id="resetPlanBtn" type="button" class="danger">🔄 Reset to Template</button>
-          <input id="importFileInput" type="file" accept="application/json" hidden />
+      <section class="quick-setup-card">
+        <div class="card-header">
+          <h2>💒 Wedding Details</h2>
+          <button id="resetPlanBtn" type="button" class="btn-text danger">
+            <span class="btn-icon">🔄</span> Reset
+          </button>
         </div>
-        <label class="full-width">
-          Shareable Link 🔗
-          <input id="shareLinkOutput" type="text" readonly placeholder="✨ Your magical share link will appear here..." />
-        </label>
+        <form id="weddingMetaForm" class="form-grid">
+          <div class="form-group">
+            <label>💑 Couple Names</label>
+            <input id="coupleNameInput" type="text" placeholder="Aarav & Anaya" required />
+          </div>
+          <div class="form-group">
+            <label>🏛️ Primary Venue</label>
+            <input id="primaryVenueInput" type="text" placeholder="Royal Palace Lawn" required />
+          </div>
+          <div class="form-group">
+            <label>📅 Wedding Date</label>
+            <input id="weddingDateInput" type="date" required />
+          </div>
+        </form>
+        <div class="share-section">
+          <label>🔗 Share Your Plan</label>
+          <div class="share-input-group">
+            <input id="shareLinkOutput" type="text" readonly placeholder="Your shareable link will appear here..." />
+          </div>
+        </div>
         <p id="statusMessage" class="status-message" aria-live="polite"></p>
       </section>
 
-      <section class="dashboard">
-        <article class="panel">
-          <h2>👥 Guest List</h2>
-          <form id="guestForm" class="grid-form">
-            <label>
-              Guest Name
-              <input name="name" type="text" required />
-            </label>
-            <label>
-              Group
+      <section class="main-content">
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-icon">👥</span>
+              <h2>Guest List</h2>
+            </div>
+          </div>
+          
+          <div class="add-form">
+            <form id="guestForm" class="inline-form">
+              <input name="name" type="text" placeholder="Guest Name" required />
               <select name="group" required>
-                <option value="family">Family</option>
-                <option value="girlfriend">Girlfriends</option>
-                <option value="friends">Friends</option>
-                <option value="cousins">Cousins</option>
-                <option value="colleagues">Colleagues</option>
-                <option value="vip">VIP</option>
+                <option value="family">👨‍👩‍👧 Family</option>
+                <option value="girlfriend">💁‍♀️ Girlfriends</option>
+                <option value="friends">🤝 Friends</option>
+                <option value="cousins">👫 Cousins</option>
+                <option value="colleagues">💼 Colleagues</option>
+                <option value="vip">⭐ VIP</option>
               </select>
-            </label>
-            <label>
-              Phone
-              <input name="phone" type="tel" placeholder="+91..." />
-            </label>
-            <label>
-              Dietary Notes
-              <input name="dietary" type="text" placeholder="Jain / vegan / no onion-garlic" />
-            </label>
-            <label class="full-width">
-              Notes
-              <input name="notes" type="text" placeholder="Bride side, childhood friend..." />
-            </label>
-            <button type="submit">➕ Add Guest</button>
-          </form>
+              <input name="phone" type="tel" placeholder="📱 Phone" />
+              <input name="dietary" type="text" placeholder="🥗 Dietary" />
+              <input name="notes" type="text" placeholder="📝 Notes" />
+              <button type="submit" class="btn-add">
+                <span class="btn-icon">➕</span> Add
+              </button>
+            </form>
+          </div>
 
-          <div class="table-wrap">
+          <div class="data-table">
             <table>
               <thead>
                 <tr>
@@ -102,106 +124,112 @@
                   <th>Phone</th>
                   <th>Dietary</th>
                   <th>Notes</th>
-                  <th></th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody id="guestTableBody"></tbody>
             </table>
           </div>
-        </article>
+        </div>
 
-        <article class="panel">
-          <h2>🎊 Ceremonies and Functions</h2>
-          <div class="event-selector-row">
-            <label>
-              Select Function
-              <select id="eventSelect"></select>
-            </label>
-            <button id="deleteEventBtn" type="button" class="danger">🗑️ Delete Function</button>
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-icon">🎊</span>
+              <h2>Events & Functions</h2>
+            </div>
+            <button id="deleteEventBtn" type="button" class="btn-text danger">
+              <span class="btn-icon">🗑️</span> Delete Event
+            </button>
           </div>
 
-          <form id="addEventForm" class="grid-form three-col">
-            <label>
-              New Function Name
-              <input name="name" type="text" placeholder="Cocktail Night" required />
-            </label>
-            <label>
-              Date
+          <div class="event-selector">
+            <label>Current Event</label>
+            <select id="eventSelect" class="event-select-input"></select>
+          </div>
+
+          <div class="add-form">
+            <form id="addEventForm" class="inline-form">
+              <input name="name" type="text" placeholder="🎉 Function Name" required />
               <input name="date" type="date" required />
-            </label>
-            <label>
-              Venue
-              <input name="venue" type="text" placeholder="Terrace Garden" required />
-            </label>
-            <button type="submit">➕ Add Function</button>
-          </form>
+              <input name="venue" type="text" placeholder="🏛️ Venue" required />
+              <button type="submit" class="btn-add">
+                <span class="btn-icon">➕</span> Add Event
+              </button>
+            </form>
+          </div>
 
-          <form id="eventMetaForm" class="grid-form three-col">
-            <label>
-              Function Name
-              <input id="eventNameInput" type="text" required />
-            </label>
-            <label>
-              Function Date
-              <input id="eventDateInput" type="date" />
-            </label>
-            <label>
-              Venue
-              <input id="eventVenueInput" type="text" />
-            </label>
-            <label class="full-width">
-              Notes
-              <input id="eventNotesInput" type="text" placeholder="Ritual sequence, transport, family cues..." />
-            </label>
-          </form>
+          <div class="event-details">
+            <h3>Event Details</h3>
+            <form id="eventMetaForm" class="details-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>🎊 Event Name</label>
+                  <input id="eventNameInput" type="text" required />
+                </div>
+                <div class="form-group">
+                  <label>📅 Date</label>
+                  <input id="eventDateInput" type="date" />
+                </div>
+                <div class="form-group">
+                  <label>🏛️ Venue</label>
+                  <input id="eventVenueInput" type="text" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>📝 Notes</label>
+                <input id="eventNotesInput" type="text" placeholder="Special instructions, timing details..." />
+              </div>
+            </form>
+          </div>
 
-          <div class="panel subtle">
-            <div class="event-tools">
-              <h3>💌 Invited Guests</h3>
-              <div class="action-row">
-                <label>
-                  Filter Group
-                  <select id="inviteGroupFilter">
-                    <option value="all">All</option>
-                    <option value="family">Family</option>
-                    <option value="girlfriend">Girlfriends</option>
-                    <option value="friends">Friends</option>
-                    <option value="cousins">Cousins</option>
-                    <option value="colleagues">Colleagues</option>
-                    <option value="vip">VIP</option>
-                  </select>
-                </label>
-                <button id="inviteFilteredBtn" type="button">💌 Invite Filtered</button>
-                <button id="clearInvitesBtn" type="button">🧹 Clear Invites</button>
-                <button id="applyTraditionalScenarioBtn" type="button">✨ Apply Mehndi + Sangeet Scenario</button>
+          <div class="guest-invite-section">
+            <div class="section-header">
+              <h3>💌 Guest Invitations</h3>
+              <div class="invite-controls">
+                <select id="inviteGroupFilter" class="filter-select">
+                  <option value="all">All Groups</option>
+                  <option value="family">👨‍👩‍👧 Family</option>
+                  <option value="girlfriend">💁‍♀️ Girlfriends</option>
+                  <option value="friends">🤝 Friends</option>
+                  <option value="cousins">👫 Cousins</option>
+                  <option value="colleagues">💼 Colleagues</option>
+                  <option value="vip">⭐ VIP</option>
+                </select>
+                <button id="inviteFilteredBtn" type="button" class="btn-sm">Invite Filtered</button>
+                <button id="clearInvitesBtn" type="button" class="btn-sm">Clear All</button>
+                <button id="applyTraditionalScenarioBtn" type="button" class="btn-sm btn-special">✨ Auto-Scenario</button>
               </div>
             </div>
-            <div id="inviteGuestList" class="checkbox-grid"></div>
+            <div id="inviteGuestList" class="guest-grid"></div>
           </div>
-        </article>
+        </div>
       </section>
 
-      <section class="dashboard single-col">
-        <article class="panel">
-          <h2>📋 Execution Trackers for Selected Function</h2>
+      <section class="trackers-section">
+        <div class="section-title">
+          <h2>📋 Event Execution Tracker</h2>
+        </div>
 
+        <div class="tracker-tabs">
           <div class="tracker-grid">
-            <section class="panel subtle">
-              <h3>✅ Tasks</h3>
-              <form id="taskForm" class="grid-form four-col">
-                <label><input name="title" type="text" placeholder="Task title" required /></label>
-                <label><input name="owner" type="text" placeholder="Owner" /></label>
-                <label>
-                  <select name="status">
-                    <option value="pending">Pending</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="done">Done</option>
-                  </select>
-                </label>
-                <label><input name="deadline" type="date" /></label>
-                <button type="submit">Add Task</button>
+            <div class="tracker-card">
+              <div class="tracker-header">
+                <span class="tracker-icon">✅</span>
+                <h3>Tasks</h3>
+              </div>
+              <form id="taskForm" class="tracker-form">
+                <input name="title" type="text" placeholder="Task title" required />
+                <input name="owner" type="text" placeholder="Owner" />
+                <select name="status">
+                  <option value="pending">⏳ Pending</option>
+                  <option value="in_progress">🔄 In Progress</option>
+                  <option value="done">✅ Done</option>
+                </select>
+                <input name="deadline" type="date" />
+                <button type="submit" class="btn-add-small">➕</button>
               </form>
-              <div class="table-wrap">
+              <div class="tracker-list">
                 <table>
                   <thead>
                     <tr>
@@ -215,25 +243,26 @@
                   <tbody id="taskTableBody"></tbody>
                 </table>
               </div>
-            </section>
+            </div>
 
-            <section class="panel subtle">
-              <h3>📦 Materials</h3>
-              <form id="materialForm" class="grid-form five-col">
-                <label><input name="item" type="text" placeholder="Item" required /></label>
-                <label><input name="qty" type="number" min="1" value="1" required /></label>
-                <label><input name="vendor" type="text" placeholder="Vendor" /></label>
-                <label>
-                  <select name="status">
-                    <option value="pending">Pending</option>
-                    <option value="ordered">Ordered</option>
-                    <option value="delivered">Delivered</option>
-                  </select>
-                </label>
-                <label><input name="cost" type="number" min="0" step="0.01" placeholder="Cost" /></label>
-                <button type="submit">Add Material</button>
+            <div class="tracker-card">
+              <div class="tracker-header">
+                <span class="tracker-icon">📦</span>
+                <h3>Materials</h3>
+              </div>
+              <form id="materialForm" class="tracker-form">
+                <input name="item" type="text" placeholder="Item name" required />
+                <input name="qty" type="number" min="1" value="1" placeholder="Qty" required />
+                <input name="vendor" type="text" placeholder="Vendor" />
+                <select name="status">
+                  <option value="pending">⏳ Pending</option>
+                  <option value="ordered">📦 Ordered</option>
+                  <option value="delivered">✅ Delivered</option>
+                </select>
+                <input name="cost" type="number" min="0" step="0.01" placeholder="₹ Cost" />
+                <button type="submit" class="btn-add-small">➕</button>
               </form>
-              <div class="table-wrap">
+              <div class="tracker-list">
                 <table>
                   <thead>
                     <tr>
@@ -248,19 +277,22 @@
                   <tbody id="materialTableBody"></tbody>
                 </table>
               </div>
-            </section>
+            </div>
 
-            <section class="panel subtle">
-              <h3>🍽️ Food</h3>
-              <form id="foodForm" class="grid-form five-col">
-                <label><input name="dish" type="text" placeholder="Dish / Station" required /></label>
-                <label><input name="course" type="text" placeholder="Course" /></label>
-                <label><input name="vendor" type="text" placeholder="Caterer" /></label>
-                <label><input name="servings" type="number" min="0" placeholder="Servings" /></label>
-                <label><input name="cost" type="number" min="0" step="0.01" placeholder="Cost" /></label>
-                <button type="submit">Add Food Item</button>
+            <div class="tracker-card">
+              <div class="tracker-header">
+                <span class="tracker-icon">🍽️</span>
+                <h3>Food & Catering</h3>
+              </div>
+              <form id="foodForm" class="tracker-form">
+                <input name="dish" type="text" placeholder="Dish name" required />
+                <input name="course" type="text" placeholder="Course" />
+                <input name="vendor" type="text" placeholder="Caterer" />
+                <input name="servings" type="number" min="0" placeholder="Servings" />
+                <input name="cost" type="number" min="0" step="0.01" placeholder="₹ Cost" />
+                <button type="submit" class="btn-add-small">➕</button>
               </form>
-              <div class="table-wrap">
+              <div class="tracker-list">
                 <table>
                   <thead>
                     <tr>
@@ -275,25 +307,26 @@
                   <tbody id="foodTableBody"></tbody>
                 </table>
               </div>
-            </section>
+            </div>
 
-            <section class="panel subtle">
-              <h3>🌸 Decor</h3>
-              <form id="decorForm" class="grid-form five-col">
-                <label><input name="element" type="text" placeholder="Decor element" required /></label>
-                <label><input name="vendor" type="text" placeholder="Decorator" /></label>
-                <label><input name="theme" type="text" placeholder="Theme/color" /></label>
-                <label>
-                  <select name="status">
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="ready">Ready</option>
-                  </select>
-                </label>
-                <label><input name="cost" type="number" min="0" step="0.01" placeholder="Cost" /></label>
-                <button type="submit">Add Decor Item</button>
+            <div class="tracker-card">
+              <div class="tracker-header">
+                <span class="tracker-icon">🌸</span>
+                <h3>Decor</h3>
+              </div>
+              <form id="decorForm" class="tracker-form">
+                <input name="element" type="text" placeholder="Decor element" required />
+                <input name="vendor" type="text" placeholder="Decorator" />
+                <input name="theme" type="text" placeholder="Theme/Color" />
+                <select name="status">
+                  <option value="pending">⏳ Pending</option>
+                  <option value="approved">👍 Approved</option>
+                  <option value="ready">✅ Ready</option>
+                </select>
+                <input name="cost" type="number" min="0" step="0.01" placeholder="₹ Cost" />
+                <button type="submit" class="btn-add-small">➕</button>
               </form>
-              <div class="table-wrap">
+              <div class="tracker-list">
                 <table>
                   <thead>
                     <tr>
@@ -308,19 +341,22 @@
                   <tbody id="decorTableBody"></tbody>
                 </table>
               </div>
-            </section>
+            </div>
 
-            <section class="panel subtle">
-              <h3>🎵 DJ and Performances</h3>
-              <form id="djForm" class="grid-form five-col">
-                <label><input name="slot" type="text" placeholder="Slot (7:00 PM)" required /></label>
-                <label><input name="performer" type="text" placeholder="Performer / DJ" /></label>
-                <label><input name="type" type="text" placeholder="Dance / DJ / Dhol" /></label>
-                <label><input name="notes" type="text" placeholder="Song or cue notes" /></label>
-                <label><input name="cost" type="number" min="0" step="0.01" placeholder="Cost" /></label>
-                <button type="submit">Add Performance</button>
+            <div class="tracker-card">
+              <div class="tracker-header">
+                <span class="tracker-icon">🎵</span>
+                <h3>Entertainment</h3>
+              </div>
+              <form id="djForm" class="tracker-form">
+                <input name="slot" type="text" placeholder="Time slot" required />
+                <input name="performer" type="text" placeholder="Performer" />
+                <input name="type" type="text" placeholder="Type" />
+                <input name="notes" type="text" placeholder="Notes" />
+                <input name="cost" type="number" min="0" step="0.01" placeholder="₹ Cost" />
+                <button type="submit" class="btn-add-small">➕</button>
               </form>
-              <div class="table-wrap">
+              <div class="tracker-list">
                 <table>
                   <thead>
                     <tr>
@@ -335,19 +371,22 @@
                   <tbody id="djTableBody"></tbody>
                 </table>
               </div>
-            </section>
+            </div>
 
-            <section class="panel subtle">
-              <h3>🎁 Party Favors</h3>
-              <form id="favorForm" class="grid-form five-col">
-                <label><input name="item" type="text" placeholder="Favor item" required /></label>
-                <label><input name="qty" type="number" min="1" value="1" required /></label>
-                <label><input name="target" type="text" placeholder="Target guest segment" /></label>
-                <label><input name="notes" type="text" placeholder="Packaging details" /></label>
-                <label><input name="cost" type="number" min="0" step="0.01" placeholder="Cost" /></label>
-                <button type="submit">Add Favor</button>
+            <div class="tracker-card">
+              <div class="tracker-header">
+                <span class="tracker-icon">🎁</span>
+                <h3>Party Favors</h3>
+              </div>
+              <form id="favorForm" class="tracker-form">
+                <input name="item" type="text" placeholder="Favor item" required />
+                <input name="qty" type="number" min="1" value="1" placeholder="Qty" required />
+                <input name="target" type="text" placeholder="Target guests" />
+                <input name="notes" type="text" placeholder="Details" />
+                <input name="cost" type="number" min="0" step="0.01" placeholder="₹ Cost" />
+                <button type="submit" class="btn-add-small">➕</button>
               </form>
-              <div class="table-wrap">
+              <div class="tracker-list">
                 <table>
                   <thead>
                     <tr>
@@ -362,17 +401,25 @@
                   <tbody id="favorTableBody"></tbody>
                 </table>
               </div>
-            </section>
+            </div>
           </div>
-        </article>
+        </div>
       </section>
 
-      <section class="dashboard single-col">
-        <article class="panel">
-          <h2>📊 Summary</h2>
-          <div id="globalSummary" class="summary-grid"></div>
-          <div id="eventSummary" class="summary-grid"></div>
-        </article>
+      <section class="summary-section">
+        <div class="summary-card-container">
+          <div class="summary-title">
+            <h2>📊 Overview & Summary</h2>
+          </div>
+          <div class="summary-group">
+            <h3>Overall Wedding Statistics</h3>
+            <div id="globalSummary" class="stats-grid"></div>
+          </div>
+          <div class="summary-group">
+            <h3>Current Event Details</h3>
+            <div id="eventSummary" class="stats-grid"></div>
+          </div>
+        </div>
       </section>
     </main>
 
