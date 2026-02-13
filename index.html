@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>North Indian Wedding Planner</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <h1>North Indian Wedding Planning Application</h1>
+        <p>
+          Plan every ceremony to the dot: guests, materials, food, decor, DJ, favors, and tasks
+          for Engagement, Haldi, Mehndi, Sangeet, Wedding, and beyond.
+        </p>
+      </header>
+
+      <section class="panel">
+        <h2>Wedding Overview</h2>
+        <form id="weddingMetaForm" class="grid-form three-col">
+          <label>
+            Couple Name
+            <input id="coupleNameInput" type="text" placeholder="Aarav & Anaya" required />
+          </label>
+          <label>
+            Primary Venue
+            <input id="primaryVenueInput" type="text" placeholder="Royal Palace Lawn" required />
+          </label>
+          <label>
+            Wedding Date
+            <input id="weddingDateInput" type="date" required />
+          </label>
+        </form>
+
+        <div class="action-row">
+          <button id="sharePlanBtn" type="button">Copy Share Link</button>
+          <button id="exportPlanBtn" type="button">Export JSON</button>
+          <button id="importPlanBtn" type="button">Import JSON</button>
+          <button id="resetPlanBtn" type="button" class="danger">Reset to Template</button>
+          <input id="importFileInput" type="file" accept="application/json" hidden />
+        </div>
+        <label class="full-width">
+          Shareable Link
+          <input id="shareLinkOutput" type="text" readonly placeholder="Share link appears here..." />
+        </label>
+        <p id="statusMessage" class="status-message" aria-live="polite"></p>
+      </section>
+
+      <section class="dashboard">
+        <article class="panel">
+          <h2>Guest List</h2>
+          <form id="guestForm" class="grid-form">
+            <label>
+              Guest Name
+              <input name="name" type="text" required />
+            </label>
+            <label>
+              Group
+              <select name="group" required>
+                <option value="family">Family</option>
+                <option value="girlfriend">Girlfriends</option>
+                <option value="friends">Friends</option>
+                <option value="cousins">Cousins</option>
+                <option value="colleagues">Colleagues</option>
+                <option value="vip">VIP</option>
+              </select>
+            </label>
+            <label>
+              Phone
+              <input name="phone" type="tel" placeholder="+91..." />
+            </label>
+            <label>
+              Dietary Notes
+              <input name="dietary" type="text" placeholder="Jain / vegan / no onion-garlic" />
+            </label>
+            <label class="full-width">
+              Notes
+              <input name="notes" type="text" placeholder="Bride side, childhood friend..." />
+            </label>
+            <button type="submit">Add Guest</button>
+          </form>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Group</th>
+                  <th>Phone</th>
+                  <th>Dietary</th>
+                  <th>Notes</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="guestTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Ceremonies and Functions</h2>
+          <div class="event-selector-row">
+            <label>
+              Select Function
+              <select id="eventSelect"></select>
+            </label>
+            <button id="deleteEventBtn" type="button" class="danger">Delete Function</button>
+          </div>
+
+          <form id="addEventForm" class="grid-form three-col">
+            <label>
+              New Function Name
+              <input name="name" type="text" placeholder="Cocktail Night" required />
+            </label>
+            <label>
+              Date
+              <input name="date" type="date" required />
+            </label>
+            <label>
+              Venue
+              <input name="venue" type="text" placeholder="Terrace Garden" required />
+            </label>
+            <button type="submit">Add Function</button>
+          </form>
+
+          <form id="eventMetaForm" class="grid-form three-col">
+            <label>
+              Function Name
+              <input id="eventNameInput" type="text" required />
+            </label>
+            <label>
+              Function Date
+              <input id="eventDateInput" type="date" />
+            </label>
+            <label>
+              Venue
+              <input id="eventVenueInput" type="text" />
+            </label>
+            <label class="full-width">
+              Notes
+              <input id="eventNotesInput" type="text" placeholder="Ritual sequence, transport, family cues..." />
+            </label>
+          </form>
+
+          <div class="panel subtle">
+            <div class="event-tools">
+              <h3>Invited Guests</h3>
+              <div class="action-row">
+                <label>
+                  Filter Group
+                  <select id="inviteGroupFilter">
+                    <option value="all">All</option>
+                    <option value="family">Family</option>
+                    <option value="girlfriend">Girlfriends</option>
+                    <option value="friends">Friends</option>
+                    <option value="cousins">Cousins</option>
+                    <option value="colleagues">Colleagues</option>
+                    <option value="vip">VIP</option>
+                  </select>
+                </label>
+                <button id="inviteFilteredBtn" type="button">Invite Filtered</button>
+                <button id="clearInvitesBtn" type="button">Clear Invites</button>
+                <button id="applyTraditionalScenarioBtn" type="button">Apply Mehndi + Sangeet Scenario</button>
+              </div>
+            </div>
+            <div id="inviteGuestList" class="checkbox-grid"></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard single-col">
+        <article class="panel">
+          <h2>Execution Trackers for Selected Function</h2>
+
+          <div class="tracker-grid">
+            <section class="panel subtle">
+              <h3>Tasks</h3>
+              <form id="taskForm" class="grid-form four-col">
+                <label><input name="title" type="text" placeholder="Task title" required /></label>
+                <label><input name="owner" type="text" placeholder="Owner" /></label>
+                <label>
+                  <select name="status">
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="done">Done</option>
+                  </select>
+                </label>
+                <label><input name="deadline" type="date" /></label>
+                <button type="submit">Add Task</button>
+              </form>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Task</th>
+                      <th>Owner</th>
+                      <th>Status</th>
+                      <th>Deadline</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="taskTableBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel subtle">
+              <h3>Materials</h3>
+              <form id="materialForm" class="grid-form five-col">
+                <label><input name="item" type="text" placeholder="Item" required /></label>
+                <label><input name="qty" type="number" min="1" value="1" required /></label>
+                <label><input name="vendor" type="text" placeholder="Vendor" /></label>
+                <label>
+                  <select name="status">
+                    <option value="pending">Pending</option>
+                    <option value="ordered">Ordered</option>
+                    <option value="delivered">Delivered</option>
+                  </select>
+                </label>
+                <label><input name="cost" type="number" min="0" step="0.01" placeholder="Cost" /></label>
+                <button type="submit">Add Material</button>
+              </form>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Qty</th>
+                      <th>Vendor</th>
+                      <th>Status</th>
+                      <th>Cost</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="materialTableBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel subtle">
+              <h3>Food</h3>
+              <form id="foodForm" class="grid-form five-col">
+                <label><input name="dish" type="text" placeholder="Dish / Station" required /></label>
+                <label><input name="course" type="text" placeholder="Course" /></label>
+                <label><input name="vendor" type="text" placeholder="Caterer" /></label>
+                <label><input name="servings" type="number" min="0" placeholder="Servings" /></label>
+                <label><input name="cost" type="number" min="0" step="0.01" placeholder="Cost" /></label>
+                <button type="submit">Add Food Item</button>
+              </form>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Dish</th>
+                      <th>Course</th>
+                      <th>Caterer</th>
+                      <th>Servings</th>
+                      <th>Cost</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="foodTableBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel subtle">
+              <h3>Decor</h3>
+              <form id="decorForm" class="grid-form five-col">
+                <label><input name="element" type="text" placeholder="Decor element" required /></label>
+                <label><input name="vendor" type="text" placeholder="Decorator" /></label>
+                <label><input name="theme" type="text" placeholder="Theme/color" /></label>
+                <label>
+                  <select name="status">
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="ready">Ready</option>
+                  </select>
+                </label>
+                <label><input name="cost" type="number" min="0" step="0.01" placeholder="Cost" /></label>
+                <button type="submit">Add Decor Item</button>
+              </form>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Element</th>
+                      <th>Decorator</th>
+                      <th>Theme</th>
+                      <th>Status</th>
+                      <th>Cost</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="decorTableBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel subtle">
+              <h3>DJ and Performances</h3>
+              <form id="djForm" class="grid-form five-col">
+                <label><input name="slot" type="text" placeholder="Slot (7:00 PM)" required /></label>
+                <label><input name="performer" type="text" placeholder="Performer / DJ" /></label>
+                <label><input name="type" type="text" placeholder="Dance / DJ / Dhol" /></label>
+                <label><input name="notes" type="text" placeholder="Song or cue notes" /></label>
+                <label><input name="cost" type="number" min="0" step="0.01" placeholder="Cost" /></label>
+                <button type="submit">Add Performance</button>
+              </form>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Slot</th>
+                      <th>Performer</th>
+                      <th>Type</th>
+                      <th>Notes</th>
+                      <th>Cost</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="djTableBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel subtle">
+              <h3>Party Favors</h3>
+              <form id="favorForm" class="grid-form five-col">
+                <label><input name="item" type="text" placeholder="Favor item" required /></label>
+                <label><input name="qty" type="number" min="1" value="1" required /></label>
+                <label><input name="target" type="text" placeholder="Target guest segment" /></label>
+                <label><input name="notes" type="text" placeholder="Packaging details" /></label>
+                <label><input name="cost" type="number" min="0" step="0.01" placeholder="Cost" /></label>
+                <button type="submit">Add Favor</button>
+              </form>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Qty</th>
+                      <th>Target</th>
+                      <th>Notes</th>
+                      <th>Cost</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="favorTableBody"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard single-col">
+        <article class="panel">
+          <h2>Summary</h2>
+          <div id="globalSummary" class="summary-grid"></div>
+          <div id="eventSummary" class="summary-grid"></div>
+        </article>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
