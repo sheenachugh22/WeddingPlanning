@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>My Wedding Journey 💕</title>
+    <title>Wedding Planner</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,8 +19,8 @@
       <!-- Header -->
       <header class="app-header">
         <div class="header-content">
-          <h1 class="app-title">My Wedding Journey</h1>
-          <p class="app-subtitle" id="coupleNameDisplay">Your Special Day</p>
+          <h1 class="app-title">Wedding Planner</h1>
+          <p class="app-subtitle" id="coupleNameDisplay">Your Wedding Details</p>
         </div>
         <button id="shareBtn" class="share-btn" aria-label="Share wedding plan">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -65,7 +65,7 @@
         <section class="tab-content active" id="tab-overview">
           <div class="overview-hero">
             <div class="countdown-card">
-              <div class="countdown-label">Days Until I Do</div>
+              <div class="countdown-label">Days Until Wedding</div>
               <div class="countdown-number" id="countdownDays">--</div>
             </div>
           </div>
@@ -74,15 +74,15 @@
             <h2 class="section-title">Wedding Details</h2>
             <form id="weddingMetaForm" class="wedding-form">
               <div class="form-field">
-                <label>💑 Our Names</label>
+                <label>Couple Names</label>
                 <input id="coupleNameInput" type="text" placeholder="Bride & Groom" />
               </div>
               <div class="form-field">
-                <label>📅 Wedding Date</label>
+                <label>Wedding Date</label>
                 <input id="weddingDateInput" type="date" />
               </div>
               <div class="form-field">
-                <label>🏰 Venue</label>
+                <label>Venue</label>
                 <input id="primaryVenueInput" type="text" placeholder="The Grand Palace" />
               </div>
             </form>
@@ -113,7 +113,7 @@
 
           <div class="share-card">
             <h3>Share Your Wedding Plan</h3>
-            <p class="share-description">Share this beautiful planner with your partner, family, or wedding planner!</p>
+            <p class="share-description">Share this planner with your partner, family, or wedding planner</p>
             <div class="share-link-display">
               <input type="text" id="shareLinkOutput" readonly placeholder="Your shareable link will appear here..." />
               <button id="copyLinkBtn" class="copy-btn">Copy</button>
@@ -133,12 +133,12 @@
               <input name="name" type="text" placeholder="Guest Name" required />
               <select name="group" required>
                 <option value="">Select Group</option>
-                <option value="family">👨‍👩‍👧 Family</option>
-                <option value="girlfriend">💁‍♀️ Friends (Bride)</option>
-                <option value="friends">🤝 Friends (Groom)</option>
-                <option value="cousins">👫 Extended Family</option>
-                <option value="colleagues">💼 Colleagues</option>
-                <option value="vip">⭐ Special Guests</option>
+                <option value="family">Family</option>
+                <option value="girlfriend">Friends (Bride)</option>
+                <option value="friends">Friends (Groom)</option>
+                <option value="cousins">Extended Family</option>
+                <option value="colleagues">Colleagues</option>
+                <option value="vip">Special Guests</option>
               </select>
               <input name="phone" type="tel" placeholder="Phone Number" />
               <input name="dietary" type="text" placeholder="Dietary Requirements" />
