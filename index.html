@@ -128,11 +128,13 @@
           <h2 class="section-title">Guest List</h2>
           
           <div class="add-guest-card">
-            <h3>Add New Guest</h3>
+            <h3>Add Guest Group</h3>
+            <p class="add-guest-hint">Add groups of guests with counts (e.g., "Mom's Friends - 7", "John +1", "Groom's Colleagues - 20")</p>
             <form id="guestForm" class="guest-form">
-              <input name="name" type="text" placeholder="Guest Name" required />
+              <input name="name" type="text" placeholder="Group Name (e.g., Mom's Friends, John +1)" required />
+              <input name="count" type="number" min="1" value="1" placeholder="Count" required />
               <select name="group" required>
-                <option value="">Select Group</option>
+                <option value="">Select Category</option>
                 <option value="family">Family</option>
                 <option value="girlfriend">Friends (Bride)</option>
                 <option value="friends">Friends (Groom)</option>
@@ -140,10 +142,9 @@
                 <option value="colleagues">Colleagues</option>
                 <option value="vip">Special Guests</option>
               </select>
-              <input name="phone" type="tel" placeholder="Phone Number" />
-              <input name="dietary" type="text" placeholder="Dietary Requirements" />
-              <input name="notes" type="text" placeholder="Notes" />
-              <button type="submit" class="btn-add">Add Guest</button>
+              <input name="phone" type="tel" placeholder="Contact Phone (optional)" />
+              <input name="notes" type="text" placeholder="Notes (optional)" />
+              <button type="submit" class="btn-add">Add Guest Group</button>
             </form>
           </div>
 

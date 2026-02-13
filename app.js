@@ -266,16 +266,13 @@ async function copyToClipboard(text) {
 
 function createDefaultState() {
   const guests = [
-    guestSeed("guest_family_1", "Sakshi Verma", "family", "+91-98100-1101", "No mushroom", "Bride side - elder sister"),
-    guestSeed("guest_family_2", "Rajesh Verma", "family", "+91-98100-1102", "", "Bride father"),
-    guestSeed("guest_family_3", "Nidhi Kapoor", "family", "+91-98100-1103", "Jain meal", "Groom mother"),
-    guestSeed("guest_gf_1", "Ria Malhotra", "girlfriend", "+91-98100-2201", "", "College friend"),
-    guestSeed("guest_gf_2", "Meher Arora", "girlfriend", "+91-98100-2202", "", "Dance lead"),
-    guestSeed("guest_gf_3", "Kiara Bansal", "girlfriend", "+91-98100-2203", "Vegan", "Mehndi anchor"),
-    guestSeed("guest_friend_1", "Arjun Sethi", "friends", "+91-98100-3301", "", "Groom friend"),
-    guestSeed("guest_friend_2", "Naina Khanna", "friends", "+91-98100-3302", "", "Bride office friend"),
-    guestSeed("guest_cousin_1", "Neel Sharma", "cousins", "+91-98100-4401", "", "Logistics help"),
-    guestSeed("guest_vip_1", "Mr. Gupta", "vip", "+91-98100-5501", "", "Family elder"),
+    guestSeed("guest_family_1", "Bride's Family", "family", 15, "+91-98100-1101", "Bride's immediate family and close relatives"),
+    guestSeed("guest_family_2", "Groom's Family", "family", 18, "+91-98100-1102", "Groom's immediate family and close relatives"),
+    guestSeed("guest_gf_1", "Bride's Girlfriends", "girlfriend", 8, "+91-98100-2201", "College and childhood friends"),
+    guestSeed("guest_friend_1", "Groom's Friends", "friends", 12, "+91-98100-3301", "School and college friends"),
+    guestSeed("guest_cousin_1", "Extended Family", "cousins", 20, "+91-98100-4401", "Cousins and extended relatives"),
+    guestSeed("guest_colleagues_1", "Work Colleagues", "colleagues", 10, "", "Office colleagues"),
+    guestSeed("guest_vip_1", "Special Guests", "vip", 7, "+91-98100-5501", "Family friends and VIPs"),
   ];
 
   const allGuestIds = guests.map((guest) => guest.id);
@@ -434,8 +431,8 @@ function createDefaultState() {
   };
 }
 
-function guestSeed(id, name, group, phone, dietary, notes) {
-  return { id, name, group, phone, dietary, notes };
+function guestSeed(id, name, group, count, phone, notes) {
+  return { id, name, group, count: count || 1, phone, notes };
 }
 
 function taskSeed(title, owner, status, deadline) {
@@ -519,9 +516,9 @@ function normalizeState(raw) {
     ? raw.guests.map((guest) => ({
         id: sanitizeText(guest.id) || createId("guest"),
         name: sanitizeText(guest.name),
+        count: sanitizeInteger(guest.count, 1),
         group: sanitizeGroup(guest.group),
         phone: sanitizeText(guest.phone),
-        dietary: sanitizeText(guest.dietary),
         notes: sanitizeText(guest.notes),
       }))
     : fallback.guests;
@@ -740,26 +737,32 @@ function renderWeddingMeta() {
 
 function renderGuestList() {
   if (!state.guests.length) {
-    dom.guestListContainer.innerHTML = `<div class="muted text-center">No guests yet. Add your first guest</div>`;
+    dom.guestListContainer.innerHTML = `<div class="muted text-center">No guest groups yet. Add your first group</div>`;
     return;
   }
 
   dom.guestListContainer.innerHTML = state.guests
     .map(
-      (guest) => `
+      (guest) => {
+        const count = guest.count || 1;
+        const countLabel = count === 1 ? '1 person' : `${count} people`;
+        return `
         <div class="guest-card">
           <div class="guest-info">
-            <h4>${escapeHtml(guest.name)}</h4>
+            <div class="guest-header">
+              <h4>${escapeHtml(guest.name)}</h4>
+              <span class="guest-count">${countLabel}</span>
+            </div>
             <div class="guest-meta">
               <span class="guest-badge">${formatGroupLabel(guest.group)}</span>
               ${guest.phone ? `<span>Phone: ${escapeHtml(guest.phone)}</span>` : ""}
-              ${guest.dietary ? `<span>Dietary: ${escapeHtml(guest.dietary)}</span>` : ""}
               ${guest.notes ? `<span>Notes: ${escapeHtml(guest.notes)}</span>` : ""}
             </div>
           </div>
           <button class="btn-remove" data-action="remove-guest" data-id="${guest.id}">Remove</button>
         </div>
-      `,
+      `;
+      }
     )
     .join("");
 }
@@ -801,7 +804,10 @@ function renderInviteGuestList() {
 
   dom.inviteGuestList.innerHTML = filteredGuests
     .map(
-      (guest) => `
+      (guest) => {
+        const count = guest.count || 1;
+        const countLabel = count === 1 ? '1 person' : `${count} people`;
+        return `
         <label class="checkbox-tile">
           <input
             type="checkbox"
@@ -810,10 +816,11 @@ function renderInviteGuestList() {
           />
           <span>
             <strong>${escapeHtml(guest.name)}</strong>
-            <small>${formatGroupLabel(guest.group)}</small>
+            <small>${formatGroupLabel(guest.group)} • ${countLabel}</small>
           </span>
         </label>
-      `,
+      `;
+      }
     )
     .join("");
 }
@@ -1013,8 +1020,11 @@ function renderStats() {
     (sum, item) => sum + item.tasks.filter((task) => task.status === "done").length,
     0,
   );
+  
+  // Sum all guest counts
+  const totalGuestCount = state.guests.reduce((sum, guest) => sum + (guest.count || 1), 0);
 
-  dom.statGuestCount.textContent = state.guests.length;
+  dom.statGuestCount.textContent = totalGuestCount;
   dom.statEventCount.textContent = state.events.length;
   dom.statTasksDone.textContent = doneTasks;
   dom.statTasksTotal.textContent = totalTasks;
@@ -1104,17 +1114,23 @@ function onGuestAdd(event) {
     return;
   }
 
+  const count = sanitizeInteger(formData.get("count"), 1);
+
   state.guests.push({
     id: createId("guest"),
     name,
+    count: count,
     group: sanitizeGroup(String(formData.get("group") || "")),
     phone: sanitizeText(formData.get("phone")),
-    dietary: sanitizeText(formData.get("dietary")),
     notes: sanitizeText(formData.get("notes")),
   });
 
   dom.guestForm.reset();
-  saveAndRender("Guest added");
+  // Reset count to 1
+  const countInput = dom.guestForm.querySelector('input[name="count"]');
+  if (countInput) countInput.value = "1";
+  
+  saveAndRender(`Guest group added (${count} ${count === 1 ? 'person' : 'people'})`);
 }
 
 function onGuestAction(event) {
