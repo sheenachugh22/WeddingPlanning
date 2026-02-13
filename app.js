@@ -192,9 +192,9 @@ function updateCountdown() {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
   if (diffDays < 0) {
-    dom.countdownDays.textContent = "💕";
+    dom.countdownDays.textContent = "✓";
   } else if (diffDays === 0) {
-    dom.countdownDays.textContent = "TODAY!";
+    dom.countdownDays.textContent = "TODAY";
   } else {
     dom.countdownDays.textContent = diffDays;
   }
@@ -734,13 +734,13 @@ function renderWeddingMeta() {
   
   // Update header
   if (dom.coupleNameDisplay) {
-    dom.coupleNameDisplay.textContent = state.meta.coupleName || "Your Special Day";
+    dom.coupleNameDisplay.textContent = state.meta.coupleName || "Your Wedding Details";
   }
 }
 
 function renderGuestList() {
   if (!state.guests.length) {
-    dom.guestListContainer.innerHTML = `<div class="muted text-center">No guests yet. Add your first guest!</div>`;
+    dom.guestListContainer.innerHTML = `<div class="muted text-center">No guests yet. Add your first guest</div>`;
     return;
   }
 
@@ -752,9 +752,9 @@ function renderGuestList() {
             <h4>${escapeHtml(guest.name)}</h4>
             <div class="guest-meta">
               <span class="guest-badge">${formatGroupLabel(guest.group)}</span>
-              ${guest.phone ? `<span>📱 ${escapeHtml(guest.phone)}</span>` : ""}
-              ${guest.dietary ? `<span>🥗 ${escapeHtml(guest.dietary)}</span>` : ""}
-              ${guest.notes ? `<span>📝 ${escapeHtml(guest.notes)}</span>` : ""}
+              ${guest.phone ? `<span>Phone: ${escapeHtml(guest.phone)}</span>` : ""}
+              ${guest.dietary ? `<span>Dietary: ${escapeHtml(guest.dietary)}</span>` : ""}
+              ${guest.notes ? `<span>Notes: ${escapeHtml(guest.notes)}</span>` : ""}
             </div>
           </div>
           <button class="btn-remove" data-action="remove-guest" data-id="${guest.id}">Remove</button>
@@ -834,9 +834,9 @@ function renderTaskList() {
           <button class="btn-icon" data-action="remove-task" data-id="${task.id}">✕</button>
         </div>
         <div class="tracker-item-meta">
-          ${task.owner ? `<span>👤 ${escapeHtml(task.owner)}</span>` : ""}
+          ${task.owner ? `<span>Owner: ${escapeHtml(task.owner)}</span>` : ""}
           <span>${formatTaskStatus(task.status)}</span>
-          ${task.deadline ? `<span>📅 ${escapeHtml(task.deadline)}</span>` : ""}
+          ${task.deadline ? `<span>Due: ${escapeHtml(task.deadline)}</span>` : ""}
         </div>
       </div>
     `,
@@ -846,9 +846,9 @@ function renderTaskList() {
 
 function formatTaskStatus(status) {
   const statusMap = {
-    pending: "⏳ To Do",
-    in_progress: "🔄 In Progress",
-    done: "✅ Done"
+    pending: "To Do",
+    in_progress: "In Progress",
+    done: "Done"
   };
   return statusMap[status] || status;
 }
@@ -870,9 +870,9 @@ function renderMaterialList() {
         </div>
         <div class="tracker-item-meta">
           <span>Qty: ${escapeHtml(String(material.qty))}</span>
-          ${material.vendor ? `<span>🏪 ${escapeHtml(material.vendor)}</span>` : ""}
+          ${material.vendor ? `<span>Vendor: ${escapeHtml(material.vendor)}</span>` : ""}
           <span>${formatMaterialStatus(material.status)}</span>
-          ${material.cost ? `<span>💰 ${formatCurrency(material.cost)}</span>` : ""}
+          ${material.cost ? `<span>Cost: ${formatCurrency(material.cost)}</span>` : ""}
         </div>
       </div>
     `,
@@ -882,9 +882,9 @@ function renderMaterialList() {
 
 function formatMaterialStatus(status) {
   const statusMap = {
-    pending: "⏳ Pending",
-    ordered: "📦 Ordered",
-    delivered: "✅ Delivered"
+    pending: "Pending",
+    ordered: "Ordered",
+    delivered: "Delivered"
   };
   return statusMap[status] || status;
 }
@@ -906,9 +906,9 @@ function renderFoodList() {
         </div>
         <div class="tracker-item-meta">
           ${food.course ? `<span>${escapeHtml(food.course)}</span>` : ""}
-          ${food.vendor ? `<span>👨‍🍳 ${escapeHtml(food.vendor)}</span>` : ""}
-          ${food.servings ? `<span>🍽️ ${escapeHtml(String(food.servings))} servings</span>` : ""}
-          ${food.cost ? `<span>💰 ${formatCurrency(food.cost)}</span>` : ""}
+          ${food.vendor ? `<span>Caterer: ${escapeHtml(food.vendor)}</span>` : ""}
+          ${food.servings ? `<span>Servings: ${escapeHtml(String(food.servings))}</span>` : ""}
+          ${food.cost ? `<span>Cost: ${formatCurrency(food.cost)}</span>` : ""}
         </div>
       </div>
     `,
@@ -932,10 +932,10 @@ function renderDecorList() {
           <button class="btn-icon" data-action="remove-decor" data-id="${decor.id}">✕</button>
         </div>
         <div class="tracker-item-meta">
-          ${decor.vendor ? `<span>🎨 ${escapeHtml(decor.vendor)}</span>` : ""}
-          ${decor.theme ? `<span>🎭 ${escapeHtml(decor.theme)}</span>` : ""}
+          ${decor.vendor ? `<span>Decorator: ${escapeHtml(decor.vendor)}</span>` : ""}
+          ${decor.theme ? `<span>Theme: ${escapeHtml(decor.theme)}</span>` : ""}
           <span>${formatDecorStatus(decor.status)}</span>
-          ${decor.cost ? `<span>💰 ${formatCurrency(decor.cost)}</span>` : ""}
+          ${decor.cost ? `<span>Cost: ${formatCurrency(decor.cost)}</span>` : ""}
         </div>
       </div>
     `,
@@ -945,9 +945,9 @@ function renderDecorList() {
 
 function formatDecorStatus(status) {
   const statusMap = {
-    pending: "⏳ Pending",
-    approved: "👍 Approved",
-    ready: "✅ Ready"
+    pending: "Pending",
+    approved: "Approved",
+    ready: "Ready"
   };
   return statusMap[status] || status;
 }
@@ -964,14 +964,14 @@ function renderDjList() {
       (dj) => `
       <div class="tracker-item">
         <div class="tracker-item-header">
-          <div class="tracker-item-title">⏰ ${escapeHtml(dj.slot)}</div>
+          <div class="tracker-item-title">Time: ${escapeHtml(dj.slot)}</div>
           <button class="btn-icon" data-action="remove-dj" data-id="${dj.id}">✕</button>
         </div>
         <div class="tracker-item-meta">
-          ${dj.performer ? `<span>🎤 ${escapeHtml(dj.performer)}</span>` : ""}
-          ${dj.type ? `<span>${escapeHtml(dj.type)}</span>` : ""}
-          ${dj.notes ? `<span>📝 ${escapeHtml(dj.notes)}</span>` : ""}
-          ${dj.cost ? `<span>💰 ${formatCurrency(dj.cost)}</span>` : ""}
+          ${dj.performer ? `<span>Performer: ${escapeHtml(dj.performer)}</span>` : ""}
+          ${dj.type ? `<span>Type: ${escapeHtml(dj.type)}</span>` : ""}
+          ${dj.notes ? `<span>Notes: ${escapeHtml(dj.notes)}</span>` : ""}
+          ${dj.cost ? `<span>Cost: ${formatCurrency(dj.cost)}</span>` : ""}
         </div>
       </div>
     `,
@@ -996,9 +996,9 @@ function renderFavorList() {
         </div>
         <div class="tracker-item-meta">
           <span>Qty: ${escapeHtml(String(favor.qty))}</span>
-          ${favor.target ? `<span>🎯 ${escapeHtml(favor.target)}</span>` : ""}
-          ${favor.notes ? `<span>📝 ${escapeHtml(favor.notes)}</span>` : ""}
-          ${favor.cost ? `<span>💰 ${formatCurrency(favor.cost)}</span>` : ""}
+          ${favor.target ? `<span>For: ${escapeHtml(favor.target)}</span>` : ""}
+          ${favor.notes ? `<span>Notes: ${escapeHtml(favor.notes)}</span>` : ""}
+          ${favor.cost ? `<span>Cost: ${formatCurrency(favor.cost)}</span>` : ""}
         </div>
       </div>
     `,
