@@ -1081,8 +1081,8 @@ function eventCost(event) {
 }
 
 function onWeddingMetaChanged() {
-  state.meta.coupleName = dom.coupleNameInput.value.trim();
-  state.meta.primaryVenue = dom.primaryVenueInput.value.trim();
+  state.meta.coupleName = dom.coupleNameInput.value;
+  state.meta.primaryVenue = dom.primaryVenueInput.value;
   state.meta.weddingDate = dom.weddingDateInput.value;
   saveAndRender();
 }
@@ -1199,10 +1199,10 @@ function onEventMetaChanged() {
     return;
   }
 
-  event.name = dom.eventNameInput.value.trim() || "Untitled Function";
+  event.name = dom.eventNameInput.value || "Untitled Function";
   event.date = dom.eventDateInput.value;
-  event.venue = dom.eventVenueInput.value.trim();
-  event.notes = dom.eventNotesInput.value.trim();
+  event.venue = dom.eventVenueInput.value;
+  event.notes = dom.eventNotesInput.value;
   saveAndRender();
 }
 
