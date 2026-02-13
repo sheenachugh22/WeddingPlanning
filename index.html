@@ -15,21 +15,21 @@
   <body>
     <main class="app-shell">
       <header class="hero">
-        <h1>North Indian Wedding Planning Application</h1>
+        <h1>💕 North Indian Wedding Planning Application ✨</h1>
         <p>
           Plan every ceremony to the dot: guests, materials, food, decor, DJ, favors, and tasks
-          for Engagement, Haldi, Mehndi, Sangeet, Wedding, and beyond.
+          for Engagement, Haldi, Mehndi, Sangeet, Wedding, and beyond. Make your dream wedding a reality! 🎊
         </p>
         <div class="hero-chips">
-          <span>Guest and Invite Intelligence</span>
-          <span>Function-wise Planning</span>
-          <span>Live Budget Tracking</span>
-          <span>Shareable Plan Link</span>
+          <span>👥 Guest Intelligence</span>
+          <span>📅 Function Planning</span>
+          <span>💰 Budget Tracking</span>
+          <span>🔗 Shareable Link</span>
         </div>
       </header>
 
       <section class="panel panel-overview">
-        <h2>Wedding Overview</h2>
+        <h2>💒 Wedding Overview</h2>
         <form id="weddingMetaForm" class="grid-form three-col">
           <label>
             Couple Name
@@ -46,22 +46,22 @@
         </form>
 
         <div class="action-row">
-          <button id="sharePlanBtn" type="button">Copy Share Link</button>
-          <button id="exportPlanBtn" type="button">Export JSON</button>
-          <button id="importPlanBtn" type="button">Import JSON</button>
-          <button id="resetPlanBtn" type="button" class="danger">Reset to Template</button>
+          <button id="sharePlanBtn" type="button">🔗 Copy Share Link</button>
+          <button id="exportPlanBtn" type="button">💾 Export JSON</button>
+          <button id="importPlanBtn" type="button">📂 Import JSON</button>
+          <button id="resetPlanBtn" type="button" class="danger">🔄 Reset to Template</button>
           <input id="importFileInput" type="file" accept="application/json" hidden />
         </div>
         <label class="full-width">
-          Shareable Link
-          <input id="shareLinkOutput" type="text" readonly placeholder="Share link appears here..." />
+          Shareable Link 🔗
+          <input id="shareLinkOutput" type="text" readonly placeholder="✨ Your magical share link will appear here..." />
         </label>
         <p id="statusMessage" class="status-message" aria-live="polite"></p>
       </section>
 
       <section class="dashboard">
         <article class="panel">
-          <h2>Guest List</h2>
+          <h2>👥 Guest List</h2>
           <form id="guestForm" class="grid-form">
             <label>
               Guest Name
@@ -90,7 +90,7 @@
               Notes
               <input name="notes" type="text" placeholder="Bride side, childhood friend..." />
             </label>
-            <button type="submit">Add Guest</button>
+            <button type="submit">➕ Add Guest</button>
           </form>
 
           <div class="table-wrap">
@@ -111,13 +111,13 @@
         </article>
 
         <article class="panel">
-          <h2>Ceremonies and Functions</h2>
+          <h2>🎊 Ceremonies and Functions</h2>
           <div class="event-selector-row">
             <label>
               Select Function
               <select id="eventSelect"></select>
             </label>
-            <button id="deleteEventBtn" type="button" class="danger">Delete Function</button>
+            <button id="deleteEventBtn" type="button" class="danger">🗑️ Delete Function</button>
           </div>
 
           <form id="addEventForm" class="grid-form three-col">
@@ -133,7 +133,7 @@
               Venue
               <input name="venue" type="text" placeholder="Terrace Garden" required />
             </label>
-            <button type="submit">Add Function</button>
+            <button type="submit">➕ Add Function</button>
           </form>
 
           <form id="eventMetaForm" class="grid-form three-col">
@@ -157,7 +157,7 @@
 
           <div class="panel subtle">
             <div class="event-tools">
-              <h3>Invited Guests</h3>
+              <h3>💌 Invited Guests</h3>
               <div class="action-row">
                 <label>
                   Filter Group
@@ -171,9 +171,9 @@
                     <option value="vip">VIP</option>
                   </select>
                 </label>
-                <button id="inviteFilteredBtn" type="button">Invite Filtered</button>
-                <button id="clearInvitesBtn" type="button">Clear Invites</button>
-                <button id="applyTraditionalScenarioBtn" type="button">Apply Mehndi + Sangeet Scenario</button>
+                <button id="inviteFilteredBtn" type="button">💌 Invite Filtered</button>
+                <button id="clearInvitesBtn" type="button">🧹 Clear Invites</button>
+                <button id="applyTraditionalScenarioBtn" type="button">✨ Apply Mehndi + Sangeet Scenario</button>
               </div>
             </div>
             <div id="inviteGuestList" class="checkbox-grid"></div>
@@ -183,11 +183,11 @@
 
       <section class="dashboard single-col">
         <article class="panel">
-          <h2>Execution Trackers for Selected Function</h2>
+          <h2>📋 Execution Trackers for Selected Function</h2>
 
           <div class="tracker-grid">
             <section class="panel subtle">
-              <h3>Tasks</h3>
+              <h3>✅ Tasks</h3>
               <form id="taskForm" class="grid-form four-col">
                 <label><input name="title" type="text" placeholder="Task title" required /></label>
                 <label><input name="owner" type="text" placeholder="Owner" /></label>
@@ -218,7 +218,7 @@
             </section>
 
             <section class="panel subtle">
-              <h3>Materials</h3>
+              <h3>📦 Materials</h3>
               <form id="materialForm" class="grid-form five-col">
                 <label><input name="item" type="text" placeholder="Item" required /></label>
                 <label><input name="qty" type="number" min="1" value="1" required /></label>
@@ -251,7 +251,7 @@
             </section>
 
             <section class="panel subtle">
-              <h3>Food</h3>
+              <h3>🍽️ Food</h3>
               <form id="foodForm" class="grid-form five-col">
                 <label><input name="dish" type="text" placeholder="Dish / Station" required /></label>
                 <label><input name="course" type="text" placeholder="Course" /></label>
@@ -278,7 +278,7 @@
             </section>
 
             <section class="panel subtle">
-              <h3>Decor</h3>
+              <h3>🌸 Decor</h3>
               <form id="decorForm" class="grid-form five-col">
                 <label><input name="element" type="text" placeholder="Decor element" required /></label>
                 <label><input name="vendor" type="text" placeholder="Decorator" /></label>
@@ -311,7 +311,7 @@
             </section>
 
             <section class="panel subtle">
-              <h3>DJ and Performances</h3>
+              <h3>🎵 DJ and Performances</h3>
               <form id="djForm" class="grid-form five-col">
                 <label><input name="slot" type="text" placeholder="Slot (7:00 PM)" required /></label>
                 <label><input name="performer" type="text" placeholder="Performer / DJ" /></label>
@@ -338,7 +338,7 @@
             </section>
 
             <section class="panel subtle">
-              <h3>Party Favors</h3>
+              <h3>🎁 Party Favors</h3>
               <form id="favorForm" class="grid-form five-col">
                 <label><input name="item" type="text" placeholder="Favor item" required /></label>
                 <label><input name="qty" type="number" min="1" value="1" required /></label>
@@ -369,7 +369,7 @@
 
       <section class="dashboard single-col">
         <article class="panel">
-          <h2>Summary</h2>
+          <h2>📊 Summary</h2>
           <div id="globalSummary" class="summary-grid"></div>
           <div id="eventSummary" class="summary-grid"></div>
         </article>
