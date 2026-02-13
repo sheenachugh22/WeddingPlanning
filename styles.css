@@ -456,12 +456,19 @@ body {
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--text-dark);
+  margin-bottom: var(--space-sm);
+}
+
+.add-guest-hint {
+  font-size: 0.875rem;
+  color: var(--text-gray);
   margin-bottom: var(--space-md);
+  line-height: 1.5;
 }
 
 .guest-form {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--space-sm);
 }
 
@@ -476,11 +483,44 @@ body {
   background: white;
 }
 
+.guest-form input[name="name"] {
+  grid-column: 1;
+}
+
+.guest-form input[name="count"] {
+  font-weight: 700;
+  color: var(--primary);
+}
+
 .guest-form input:focus,
 .guest-form select:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+@media (min-width: 600px) {
+  .guest-form {
+    grid-template-columns: 2fr 1fr;
+  }
+  
+  .guest-form input[name="name"] {
+    grid-column: 1;
+  }
+  
+  .guest-form input[name="count"] {
+    grid-column: 2;
+  }
+  
+  .guest-form select,
+  .guest-form input[name="phone"],
+  .guest-form input[name="notes"] {
+    grid-column: 1 / -1;
+  }
+  
+  .guest-form button {
+    grid-column: 1 / -1;
+  }
 }
 
 .btn-add {
@@ -529,14 +569,34 @@ body {
   min-width: 0;
 }
 
+.guest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: 0.25rem;
+}
+
 .guest-info h4 {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-dark);
-  margin-bottom: 0.25rem;
+  margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+}
+
+.guest-count {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--bg-light);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .guest-meta {
