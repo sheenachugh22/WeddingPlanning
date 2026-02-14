@@ -85,7 +85,38 @@
                 <label>Venue</label>
                 <input id="primaryVenueInput" type="text" placeholder="The Grand Palace" />
               </div>
+              <div class="form-field">
+                <label>Total Budget (CAD)</label>
+                <input id="totalBudgetInput" type="number" min="0" step="100" placeholder="20000" />
+              </div>
             </form>
+          </div>
+
+          <div class="budget-tracker-card">
+            <h3>Budget Overview</h3>
+            <div class="budget-bars">
+              <div class="budget-bar-item">
+                <div class="budget-bar-header">
+                  <span>Total Budget</span>
+                  <span id="budgetTotal" class="budget-value">CAD $0</span>
+                </div>
+              </div>
+              <div class="budget-bar-item">
+                <div class="budget-bar-header">
+                  <span>Total Spent</span>
+                  <span id="budgetSpent" class="budget-value spent">CAD $0</span>
+                </div>
+                <div class="progress-bar">
+                  <div id="budgetSpentBar" class="progress-fill" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="budget-bar-item">
+                <div class="budget-bar-header">
+                  <span>Remaining</span>
+                  <span id="budgetRemaining" class="budget-value remaining">CAD $0</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="stats-grid">
@@ -248,15 +279,16 @@
               <h3>📦 Materials & Supplies</h3>
             </div>
             <form id="materialForm" class="tracker-form">
-              <input name="item" type="text" placeholder="Item" required />
+              <input name="item" type="text" placeholder="Item Name" required />
               <input name="qty" type="number" placeholder="Qty" min="1" value="1" />
-              <input name="vendor" type="text" placeholder="Vendor" />
+              <input name="vendor" type="text" placeholder="Vendor Name" />
+              <input name="cost" type="number" placeholder="Total Cost (CAD)" min="0" step="0.01" />
+              <input name="advance" type="number" placeholder="Advance Paid (CAD)" min="0" step="0.01" />
               <select name="status">
                 <option value="pending">Pending</option>
                 <option value="ordered">Ordered</option>
                 <option value="delivered">Delivered</option>
               </select>
-              <input name="cost" type="number" placeholder="Cost" min="0" step="0.01" />
               <button type="submit" class="btn-add-mini">+</button>
             </form>
             <div class="tracker-items" id="materialList"></div>
@@ -268,11 +300,12 @@
               <h3>🍽️ Food & Catering</h3>
             </div>
             <form id="foodForm" class="tracker-form">
-              <input name="dish" type="text" placeholder="Dish" required />
-              <input name="course" type="text" placeholder="Course" />
-              <input name="vendor" type="text" placeholder="Caterer" />
+              <input name="dish" type="text" placeholder="Menu Item" required />
+              <input name="course" type="text" placeholder="Course Type" />
+              <input name="vendor" type="text" placeholder="Caterer Name" />
               <input name="servings" type="number" placeholder="Servings" min="0" />
-              <input name="cost" type="number" placeholder="Cost" min="0" step="0.01" />
+              <input name="cost" type="number" placeholder="Total Cost (CAD)" min="0" step="0.01" />
+              <input name="advance" type="number" placeholder="Advance Paid (CAD)" min="0" step="0.01" />
               <button type="submit" class="btn-add-mini">+</button>
             </form>
             <div class="tracker-items" id="foodList"></div>
@@ -285,14 +318,15 @@
             </div>
             <form id="decorForm" class="tracker-form">
               <input name="element" type="text" placeholder="Decor Element" required />
-              <input name="vendor" type="text" placeholder="Decorator" />
+              <input name="vendor" type="text" placeholder="Decorator Name" />
               <input name="theme" type="text" placeholder="Theme/Color" />
+              <input name="cost" type="number" placeholder="Total Cost (CAD)" min="0" step="0.01" />
+              <input name="advance" type="number" placeholder="Advance Paid (CAD)" min="0" step="0.01" />
               <select name="status">
                 <option value="pending">Pending</option>
                 <option value="approved">Approved</option>
                 <option value="ready">Ready</option>
               </select>
-              <input name="cost" type="number" placeholder="Cost" min="0" step="0.01" />
               <button type="submit" class="btn-add-mini">+</button>
             </form>
             <div class="tracker-items" id="decorList"></div>
@@ -304,11 +338,12 @@
               <h3>🎵 Entertainment</h3>
             </div>
             <form id="djForm" class="tracker-form">
-              <input name="slot" type="text" placeholder="Time" required />
-              <input name="performer" type="text" placeholder="Performer" />
+              <input name="slot" type="text" placeholder="Time Slot" required />
+              <input name="performer" type="text" placeholder="Performer/Vendor Name" />
               <input name="type" type="text" placeholder="Type" />
+              <input name="cost" type="number" placeholder="Total Cost (CAD)" min="0" step="0.01" />
+              <input name="advance" type="number" placeholder="Advance Paid (CAD)" min="0" step="0.01" />
               <input name="notes" type="text" placeholder="Notes" />
-              <input name="cost" type="number" placeholder="Cost" min="0" step="0.01" />
               <button type="submit" class="btn-add-mini">+</button>
             </form>
             <div class="tracker-items" id="djList"></div>
@@ -322,9 +357,10 @@
             <form id="favorForm" class="tracker-form">
               <input name="item" type="text" placeholder="Favor Item" required />
               <input name="qty" type="number" placeholder="Qty" min="1" value="1" />
-              <input name="target" type="text" placeholder="For whom" />
-              <input name="notes" type="text" placeholder="Details" />
-              <input name="cost" type="number" placeholder="Cost" min="0" step="0.01" />
+              <input name="vendor" type="text" placeholder="Vendor Name" />
+              <input name="cost" type="number" placeholder="Total Cost (CAD)" min="0" step="0.01" />
+              <input name="advance" type="number" placeholder="Advance Paid (CAD)" min="0" step="0.01" />
+              <input name="notes" type="text" placeholder="Notes" />
               <button type="submit" class="btn-add-mini">+</button>
             </form>
             <div class="tracker-items" id="favorList"></div>
@@ -333,12 +369,35 @@
 
         <!-- Budget Tab -->
         <section class="tab-content" id="tab-budget">
-          <h2 class="section-title">Budget Overview</h2>
+          <h2 class="section-title">Budget Management</h2>
           
-          <div class="budget-summary">
-            <div class="budget-total-card">
-              <div class="budget-label">Total Wedding Budget</div>
-              <div class="budget-amount" id="totalBudgetAmount">₹0</div>
+          <div class="budget-summary-detailed">
+            <div class="budget-overview-card">
+              <div class="budget-stat">
+                <div class="budget-stat-label">Total Budget</div>
+                <div class="budget-stat-value" id="budgetTabTotal">CAD $0</div>
+              </div>
+              <div class="budget-stat">
+                <div class="budget-stat-label">Total Spent</div>
+                <div class="budget-stat-value spent" id="budgetTabSpent">CAD $0</div>
+              </div>
+              <div class="budget-stat">
+                <div class="budget-stat-label">Remaining</div>
+                <div class="budget-stat-value remaining" id="budgetTabRemaining">CAD $0</div>
+              </div>
+            </div>
+            <div class="progress-bar-large">
+              <div id="budgetProgressBar" class="progress-fill-large" style="width: 0%"></div>
+            </div>
+            <div class="progress-label">
+              <span id="budgetPercentage">0%</span> of budget used
+            </div>
+          </div>
+
+          <div class="budget-breakdown">
+            <h3>Vendor Payments</h3>
+            <div id="vendorPaymentsList" class="vendor-payments-list">
+              <!-- Vendor payments will be rendered here -->
             </div>
           </div>
 
@@ -355,27 +414,27 @@
               <div class="budget-category-card">
                 <div class="category-icon">📦</div>
                 <div class="category-name">Materials</div>
-                <div class="category-amount" id="budgetMaterials">₹0</div>
+                <div class="category-amount" id="budgetMaterials">CAD $0</div>
               </div>
               <div class="budget-category-card">
                 <div class="category-icon">🍽️</div>
                 <div class="category-name">Food</div>
-                <div class="category-amount" id="budgetFood">₹0</div>
+                <div class="category-amount" id="budgetFood">CAD $0</div>
               </div>
               <div class="budget-category-card">
                 <div class="category-icon">🌸</div>
                 <div class="category-name">Decor</div>
-                <div class="category-amount" id="budgetDecor">₹0</div>
+                <div class="category-amount" id="budgetDecor">CAD $0</div>
               </div>
               <div class="budget-category-card">
                 <div class="category-icon">🎵</div>
                 <div class="category-name">Entertainment</div>
-                <div class="category-amount" id="budgetEntertainment">₹0</div>
+                <div class="category-amount" id="budgetEntertainment">CAD $0</div>
               </div>
               <div class="budget-category-card">
                 <div class="category-icon">🎁</div>
                 <div class="category-name">Favors</div>
-                <div class="category-amount" id="budgetFavors">₹0</div>
+                <div class="category-amount" id="budgetFavors">CAD $0</div>
               </div>
             </div>
           </div>

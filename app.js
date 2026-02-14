@@ -29,6 +29,11 @@ function cacheDom() {
   dom.coupleNameInput = document.getElementById("coupleNameInput");
   dom.primaryVenueInput = document.getElementById("primaryVenueInput");
   dom.weddingDateInput = document.getElementById("weddingDateInput");
+  dom.totalBudgetInput = document.getElementById("totalBudgetInput");
+  dom.budgetTotal = document.getElementById("budgetTotal");
+  dom.budgetSpent = document.getElementById("budgetSpent");
+  dom.budgetRemaining = document.getElementById("budgetRemaining");
+  dom.budgetSpentBar = document.getElementById("budgetSpentBar");
   dom.statGuestCount = document.getElementById("statGuestCount");
   dom.statEventCount = document.getElementById("statEventCount");
   dom.statTasksDone = document.getElementById("statTasksDone");
@@ -72,7 +77,12 @@ function cacheDom() {
   dom.favorList = document.getElementById("favorList");
 
   // Budget tab
-  dom.totalBudgetAmount = document.getElementById("totalBudgetAmount");
+  dom.budgetTabTotal = document.getElementById("budgetTabTotal");
+  dom.budgetTabSpent = document.getElementById("budgetTabSpent");
+  dom.budgetTabRemaining = document.getElementById("budgetTabRemaining");
+  dom.budgetProgressBar = document.getElementById("budgetProgressBar");
+  dom.budgetPercentage = document.getElementById("budgetPercentage");
+  dom.vendorPaymentsList = document.getElementById("vendorPaymentsList");
   dom.eventBudgetList = document.getElementById("eventBudgetList");
   dom.budgetMaterials = document.getElementById("budgetMaterials");
   dom.budgetFood = document.getElementById("budgetFood");
@@ -422,6 +432,7 @@ function createDefaultState() {
       coupleName: "Aarav and Anaya",
       primaryVenue: "Royal Palace Lawn",
       weddingDate: "2026-11-21",
+      totalBudget: 20000,
     },
     guests,
     events,
@@ -439,24 +450,24 @@ function taskSeed(title, owner, status, deadline) {
   return { id: createId("task"), title, owner, status, deadline };
 }
 
-function materialSeed(item, qty, vendor, status, cost) {
-  return { id: createId("material"), item, qty, vendor, status, cost };
+function materialSeed(item, qty, vendor, status, cost, advance = 0) {
+  return { id: createId("material"), item, qty, vendor, status, cost, advance };
 }
 
-function foodSeed(dish, course, vendor, servings, cost) {
-  return { id: createId("food"), dish, course, vendor, servings, cost };
+function foodSeed(dish, course, vendor, servings, cost, advance = 0) {
+  return { id: createId("food"), dish, course, vendor, servings, cost, advance };
 }
 
-function decorSeed(element, vendor, theme, status, cost) {
-  return { id: createId("decor"), element, vendor, theme, status, cost };
+function decorSeed(element, vendor, theme, status, cost, advance = 0) {
+  return { id: createId("decor"), element, vendor, theme, status, cost, advance };
 }
 
-function djSeed(slot, performer, type, notes, cost) {
-  return { id: createId("dj"), slot, performer, type, notes, cost };
+function djSeed(slot, performer, type, notes, cost, advance = 0) {
+  return { id: createId("dj"), slot, performer, type, notes, cost, advance };
 }
 
-function favorSeed(item, qty, target, notes, cost) {
-  return { id: createId("favor"), item, qty, target, notes, cost };
+function favorSeed(item, qty, target, notes, cost, advance = 0, vendor = "") {
+  return { id: createId("favor"), item, qty, vendor, target, notes, cost, advance };
 }
 
 function createId(prefix) {
@@ -542,6 +553,7 @@ function normalizeState(raw) {
       coupleName: sanitizeText(raw.meta && raw.meta.coupleName) || fallback.meta.coupleName,
       primaryVenue: sanitizeText(raw.meta && raw.meta.primaryVenue) || fallback.meta.primaryVenue,
       weddingDate: sanitizeText(raw.meta && raw.meta.weddingDate) || fallback.meta.weddingDate,
+      totalBudget: sanitizeNumber(raw.meta && raw.meta.totalBudget) || fallback.meta.totalBudget,
     },
     guests,
     events,
@@ -594,6 +606,7 @@ function normalizeMaterialList(value) {
     vendor: sanitizeText(material.vendor),
     status: sanitizeMaterialStatus(material.status),
     cost: sanitizeNumber(material.cost),
+    advance: sanitizeNumber(material.advance),
   }));
 }
 
@@ -608,6 +621,7 @@ function normalizeFoodList(value) {
     vendor: sanitizeText(food.vendor),
     servings: sanitizeInteger(food.servings, 0),
     cost: sanitizeNumber(food.cost),
+    advance: sanitizeNumber(food.advance),
   }));
 }
 
@@ -622,6 +636,7 @@ function normalizeDecorList(value) {
     theme: sanitizeText(decor.theme),
     status: sanitizeDecorStatus(decor.status),
     cost: sanitizeNumber(decor.cost),
+    advance: sanitizeNumber(decor.advance),
   }));
 }
 
@@ -636,6 +651,7 @@ function normalizeDjList(value) {
     type: sanitizeText(dj.type),
     notes: sanitizeText(dj.notes),
     cost: sanitizeNumber(dj.cost),
+    advance: sanitizeNumber(dj.advance),
   }));
 }
 
@@ -647,9 +663,11 @@ function normalizeFavorList(value) {
     id: sanitizeText(favor.id) || createId("favor"),
     item: sanitizeText(favor.item),
     qty: sanitizeInteger(favor.qty, 1),
+    vendor: sanitizeText(favor.vendor),
     target: sanitizeText(favor.target),
     notes: sanitizeText(favor.notes),
     cost: sanitizeNumber(favor.cost),
+    advance: sanitizeNumber(favor.advance),
   }));
 }
 
@@ -728,11 +746,61 @@ function renderWeddingMeta() {
   dom.coupleNameInput.value = state.meta.coupleName || "";
   dom.primaryVenueInput.value = state.meta.primaryVenue || "";
   dom.weddingDateInput.value = state.meta.weddingDate || "";
+  dom.totalBudgetInput.value = state.meta.totalBudget || 20000;
   
   // Update header
   if (dom.coupleNameDisplay) {
     dom.coupleNameDisplay.textContent = state.meta.coupleName || "Professional Event Management";
   }
+  
+  // Update budget tracker
+  updateBudgetTracker();
+}
+
+function updateBudgetTracker() {
+  const totalBudget = sanitizeNumber(state.meta.totalBudget) || 20000;
+  const totalSpent = calculateTotalSpent();
+  const remaining = totalBudget - totalSpent;
+  const percentSpent = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
+  
+  if (dom.budgetTotal) {
+    dom.budgetTotal.textContent = formatCAD(totalBudget);
+  }
+  if (dom.budgetSpent) {
+    dom.budgetSpent.textContent = formatCAD(totalSpent);
+  }
+  if (dom.budgetRemaining) {
+    dom.budgetRemaining.textContent = formatCAD(remaining);
+    if (remaining < 0) {
+      dom.budgetRemaining.style.color = '#ef4444';
+    } else {
+      dom.budgetRemaining.style.color = '';
+    }
+  }
+  if (dom.budgetSpentBar) {
+    dom.budgetSpentBar.style.width = percentSpent + '%';
+  }
+}
+
+function calculateTotalSpent() {
+  let total = 0;
+  state.events.forEach(event => {
+    event.materials.forEach(item => total += sanitizeNumber(item.advance || item.cost));
+    event.food.forEach(item => total += sanitizeNumber(item.advance || item.cost));
+    event.decor.forEach(item => total += sanitizeNumber(item.advance || item.cost));
+    event.dj.forEach(item => total += sanitizeNumber(item.advance || item.cost));
+    event.favors.forEach(item => total += sanitizeNumber(item.advance || item.cost));
+  });
+  return total;
+}
+
+function formatCAD(amount) {
+  return new Intl.NumberFormat('en-CA', {
+    style: 'currency',
+    currency: 'CAD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
 }
 
 function renderGuestList() {
@@ -869,7 +937,11 @@ function renderMaterialList() {
 
   dom.materialList.innerHTML = event.materials
     .map(
-      (material) => `
+      (material) => {
+        const cost = sanitizeNumber(material.cost);
+        const advance = sanitizeNumber(material.advance);
+        const pending = cost - advance;
+        return `
       <div class="tracker-item">
         <div class="tracker-item-header">
           <div class="tracker-item-title">${escapeHtml(material.item)}</div>
@@ -879,10 +951,17 @@ function renderMaterialList() {
           <span>Qty: ${escapeHtml(String(material.qty))}</span>
           ${material.vendor ? `<span>Vendor: ${escapeHtml(material.vendor)}</span>` : ""}
           <span>${formatMaterialStatus(material.status)}</span>
-          ${material.cost ? `<span>Cost: ${formatCurrency(material.cost)}</span>` : ""}
         </div>
+        ${cost > 0 ? `
+        <div class="payment-details">
+          <span class="payment-label">Total: ${formatCAD(cost)}</span>
+          ${advance > 0 ? `<span class="payment-paid">Paid: ${formatCAD(advance)}</span>` : ""}
+          ${pending > 0 ? `<span class="payment-pending">Pending: ${formatCAD(pending)}</span>` : ""}
+        </div>
+        ` : ""}
       </div>
-    `,
+    `;
+      }
     )
     .join("");
 }
@@ -905,7 +984,11 @@ function renderFoodList() {
 
   dom.foodList.innerHTML = event.food
     .map(
-      (food) => `
+      (food) => {
+        const cost = sanitizeNumber(food.cost);
+        const advance = sanitizeNumber(food.advance);
+        const pending = cost - advance;
+        return `
       <div class="tracker-item">
         <div class="tracker-item-header">
           <div class="tracker-item-title">${escapeHtml(food.dish)}</div>
@@ -915,10 +998,17 @@ function renderFoodList() {
           ${food.course ? `<span>${escapeHtml(food.course)}</span>` : ""}
           ${food.vendor ? `<span>Caterer: ${escapeHtml(food.vendor)}</span>` : ""}
           ${food.servings ? `<span>Servings: ${escapeHtml(String(food.servings))}</span>` : ""}
-          ${food.cost ? `<span>Cost: ${formatCurrency(food.cost)}</span>` : ""}
         </div>
+        ${cost > 0 ? `
+        <div class="payment-details">
+          <span class="payment-label">Total: ${formatCAD(cost)}</span>
+          ${advance > 0 ? `<span class="payment-paid">Paid: ${formatCAD(advance)}</span>` : ""}
+          ${pending > 0 ? `<span class="payment-pending">Pending: ${formatCAD(pending)}</span>` : ""}
+        </div>
+        ` : ""}
       </div>
-    `,
+    `;
+      }
     )
     .join("");
 }
@@ -932,7 +1022,11 @@ function renderDecorList() {
 
   dom.decorList.innerHTML = event.decor
     .map(
-      (decor) => `
+      (decor) => {
+        const cost = sanitizeNumber(decor.cost);
+        const advance = sanitizeNumber(decor.advance);
+        const pending = cost - advance;
+        return `
       <div class="tracker-item">
         <div class="tracker-item-header">
           <div class="tracker-item-title">${escapeHtml(decor.element)}</div>
@@ -942,10 +1036,17 @@ function renderDecorList() {
           ${decor.vendor ? `<span>Decorator: ${escapeHtml(decor.vendor)}</span>` : ""}
           ${decor.theme ? `<span>Theme: ${escapeHtml(decor.theme)}</span>` : ""}
           <span>${formatDecorStatus(decor.status)}</span>
-          ${decor.cost ? `<span>Cost: ${formatCurrency(decor.cost)}</span>` : ""}
         </div>
+        ${cost > 0 ? `
+        <div class="payment-details">
+          <span class="payment-label">Total: ${formatCAD(cost)}</span>
+          ${advance > 0 ? `<span class="payment-paid">Paid: ${formatCAD(advance)}</span>` : ""}
+          ${pending > 0 ? `<span class="payment-pending">Pending: ${formatCAD(pending)}</span>` : ""}
+        </div>
+        ` : ""}
       </div>
-    `,
+    `;
+      }
     )
     .join("");
 }
@@ -968,20 +1069,31 @@ function renderDjList() {
 
   dom.djList.innerHTML = event.dj
     .map(
-      (dj) => `
+      (dj) => {
+        const cost = sanitizeNumber(dj.cost);
+        const advance = sanitizeNumber(dj.advance);
+        const pending = cost - advance;
+        return `
       <div class="tracker-item">
         <div class="tracker-item-header">
           <div class="tracker-item-title">Time: ${escapeHtml(dj.slot)}</div>
           <button class="btn-icon" data-action="remove-dj" data-id="${dj.id}">✕</button>
         </div>
         <div class="tracker-item-meta">
-          ${dj.performer ? `<span>Performer: ${escapeHtml(dj.performer)}</span>` : ""}
+          ${dj.performer ? `<span>Vendor: ${escapeHtml(dj.performer)}</span>` : ""}
           ${dj.type ? `<span>Type: ${escapeHtml(dj.type)}</span>` : ""}
           ${dj.notes ? `<span>Notes: ${escapeHtml(dj.notes)}</span>` : ""}
-          ${dj.cost ? `<span>Cost: ${formatCurrency(dj.cost)}</span>` : ""}
         </div>
+        ${cost > 0 ? `
+        <div class="payment-details">
+          <span class="payment-label">Total: ${formatCAD(cost)}</span>
+          ${advance > 0 ? `<span class="payment-paid">Paid: ${formatCAD(advance)}</span>` : ""}
+          ${pending > 0 ? `<span class="payment-pending">Pending: ${formatCAD(pending)}</span>` : ""}
+        </div>
+        ` : ""}
       </div>
-    `,
+    `;
+      }
     )
     .join("");
 }
@@ -995,7 +1107,11 @@ function renderFavorList() {
 
   dom.favorList.innerHTML = event.favors
     .map(
-      (favor) => `
+      (favor) => {
+        const cost = sanitizeNumber(favor.cost);
+        const advance = sanitizeNumber(favor.advance);
+        const pending = cost - advance;
+        return `
       <div class="tracker-item">
         <div class="tracker-item-header">
           <div class="tracker-item-title">${escapeHtml(favor.item)}</div>
@@ -1003,18 +1119,26 @@ function renderFavorList() {
         </div>
         <div class="tracker-item-meta">
           <span>Qty: ${escapeHtml(String(favor.qty))}</span>
+          ${favor.vendor ? `<span>Vendor: ${escapeHtml(favor.vendor)}</span>` : ""}
           ${favor.target ? `<span>For: ${escapeHtml(favor.target)}</span>` : ""}
           ${favor.notes ? `<span>Notes: ${escapeHtml(favor.notes)}</span>` : ""}
-          ${favor.cost ? `<span>Cost: ${formatCurrency(favor.cost)}</span>` : ""}
         </div>
+        ${cost > 0 ? `
+        <div class="payment-details">
+          <span class="payment-label">Total: ${formatCAD(cost)}</span>
+          ${advance > 0 ? `<span class="payment-paid">Paid: ${formatCAD(advance)}</span>` : ""}
+          ${pending > 0 ? `<span class="payment-pending">Pending: ${formatCAD(pending)}</span>` : ""}
+        </div>
+        ` : ""}
       </div>
-    `,
+    `;
+      }
     )
     .join("");
 }
 
 function renderStats() {
-  const totalBudget = state.events.reduce((sum, item) => sum + eventCost(item), 0);
+  const totalSpent = calculateTotalSpent();
   const totalTasks = state.events.reduce((sum, item) => sum + item.tasks.length, 0);
   const doneTasks = state.events.reduce(
     (sum, item) => sum + item.tasks.filter((task) => task.status === "done").length,
@@ -1028,22 +1152,92 @@ function renderStats() {
   dom.statEventCount.textContent = state.events.length;
   dom.statTasksDone.textContent = doneTasks;
   dom.statTasksTotal.textContent = totalTasks;
-  dom.statBudget.textContent = formatCurrency(totalBudget);
+  dom.statBudget.textContent = formatCAD(totalSpent);
 }
 
 function renderBudget() {
-  const totalBudget = state.events.reduce((sum, item) => sum + eventCost(item), 0);
-  dom.totalBudgetAmount.textContent = formatCurrency(totalBudget);
+  const totalBudget = sanitizeNumber(state.meta.totalBudget) || 20000;
+  const totalSpent = calculateTotalSpent();
+  const totalCost = calculateTotalCost();
+  const remaining = totalBudget - totalSpent;
+  const percentSpent = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
+  
+  // Budget overview
+  if (dom.budgetTabTotal) {
+    dom.budgetTabTotal.textContent = formatCAD(totalBudget);
+  }
+  if (dom.budgetTabSpent) {
+    dom.budgetTabSpent.textContent = formatCAD(totalSpent);
+  }
+  if (dom.budgetTabRemaining) {
+    dom.budgetTabRemaining.textContent = formatCAD(remaining);
+    if (remaining < 0) {
+      dom.budgetTabRemaining.style.color = '#ef4444';
+    } else {
+      dom.budgetTabRemaining.style.color = '';
+    }
+  }
+  if (dom.budgetProgressBar) {
+    dom.budgetProgressBar.style.width = percentSpent + '%';
+  }
+  if (dom.budgetPercentage) {
+    dom.budgetPercentage.textContent = Math.round(percentSpent) + '%';
+  }
+  
+  // Vendor payments list
+  const vendors = getAllVendorPayments();
+  if (dom.vendorPaymentsList) {
+    if (vendors.length === 0) {
+      dom.vendorPaymentsList.innerHTML = '<div class="muted text-center">No vendor payments yet</div>';
+    } else {
+      dom.vendorPaymentsList.innerHTML = vendors
+        .map(v => {
+          const pending = v.total - v.paid;
+          return `
+          <div class="vendor-payment-item">
+            <div class="vendor-payment-info">
+              <div class="vendor-name">${escapeHtml(v.vendor)}</div>
+              <div class="vendor-category">${escapeHtml(v.category)} - ${escapeHtml(v.event)}</div>
+            </div>
+            <div class="vendor-payment-amounts">
+              <div class="payment-row">
+                <span class="payment-label-sm">Total:</span>
+                <span class="payment-value">${formatCAD(v.total)}</span>
+              </div>
+              <div class="payment-row">
+                <span class="payment-label-sm">Paid:</span>
+                <span class="payment-value paid">${formatCAD(v.paid)}</span>
+              </div>
+              ${pending > 0 ? `
+              <div class="payment-row">
+                <span class="payment-label-sm">Pending:</span>
+                <span class="payment-value pending">${formatCAD(pending)}</span>
+              </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+        })
+        .join('');
+    }
+  }
   
   // Event budget breakdown
   dom.eventBudgetList.innerHTML = state.events
     .map(
-      (event) => `
+      (event) => {
+        const eventTotal = eventCost(event);
+        const eventSpent = eventSpent(event);
+        return `
       <div class="event-budget-item">
         <div class="event-budget-name">${escapeHtml(event.name)}</div>
-        <div class="event-budget-amount">${formatCurrency(eventCost(event))}</div>
+        <div class="event-budget-amounts">
+          <div class="event-budget-amount">${formatCAD(eventTotal)}</div>
+          <div class="event-budget-spent">Paid: ${formatCAD(eventSpent)}</div>
+        </div>
       </div>
-    `,
+    `;
+      }
     )
     .join("");
   
@@ -1069,11 +1263,106 @@ function renderBudget() {
     0
   );
   
-  dom.budgetMaterials.textContent = formatCurrency(materialsCost);
-  dom.budgetFood.textContent = formatCurrency(foodCost);
-  dom.budgetDecor.textContent = formatCurrency(decorCost);
-  dom.budgetEntertainment.textContent = formatCurrency(djCost);
-  dom.budgetFavors.textContent = formatCurrency(favorCost);
+  dom.budgetMaterials.textContent = formatCAD(materialsCost);
+  dom.budgetFood.textContent = formatCAD(foodCost);
+  dom.budgetDecor.textContent = formatCAD(decorCost);
+  dom.budgetEntertainment.textContent = formatCAD(djCost);
+  dom.budgetFavors.textContent = formatCAD(favorCost);
+}
+
+function calculateTotalCost() {
+  let total = 0;
+  state.events.forEach(event => {
+    event.materials.forEach(item => total += sanitizeNumber(item.cost));
+    event.food.forEach(item => total += sanitizeNumber(item.cost));
+    event.decor.forEach(item => total += sanitizeNumber(item.cost));
+    event.dj.forEach(item => total += sanitizeNumber(item.cost));
+    event.favors.forEach(item => total += sanitizeNumber(item.cost));
+  });
+  return total;
+}
+
+function eventSpent(event) {
+  let spent = 0;
+  event.materials.forEach(item => spent += sanitizeNumber(item.advance));
+  event.food.forEach(item => spent += sanitizeNumber(item.advance));
+  event.decor.forEach(item => spent += sanitizeNumber(item.advance));
+  event.dj.forEach(item => spent += sanitizeNumber(item.advance));
+  event.favors.forEach(item => spent += sanitizeNumber(item.advance));
+  return spent;
+}
+
+function getAllVendorPayments() {
+  const vendors = [];
+  
+  state.events.forEach(event => {
+    event.materials.forEach(item => {
+      if (item.vendor && item.cost > 0) {
+        vendors.push({
+          vendor: item.vendor,
+          category: 'Materials',
+          event: event.name,
+          item: item.item,
+          total: sanitizeNumber(item.cost),
+          paid: sanitizeNumber(item.advance)
+        });
+      }
+    });
+    
+    event.food.forEach(item => {
+      if (item.vendor && item.cost > 0) {
+        vendors.push({
+          vendor: item.vendor,
+          category: 'Food',
+          event: event.name,
+          item: item.dish,
+          total: sanitizeNumber(item.cost),
+          paid: sanitizeNumber(item.advance)
+        });
+      }
+    });
+    
+    event.decor.forEach(item => {
+      if (item.vendor && item.cost > 0) {
+        vendors.push({
+          vendor: item.vendor,
+          category: 'Decor',
+          event: event.name,
+          item: item.element,
+          total: sanitizeNumber(item.cost),
+          paid: sanitizeNumber(item.advance)
+        });
+      }
+    });
+    
+    event.dj.forEach(item => {
+      if (item.performer && item.cost > 0) {
+        vendors.push({
+          vendor: item.performer,
+          category: 'Entertainment',
+          event: event.name,
+          item: item.type || item.slot,
+          total: sanitizeNumber(item.cost),
+          paid: sanitizeNumber(item.advance)
+        });
+      }
+    });
+    
+    event.favors.forEach(item => {
+      if (item.vendor && item.cost > 0) {
+        vendors.push({
+          vendor: item.vendor,
+          category: 'Favors',
+          event: event.name,
+          item: item.item,
+          total: sanitizeNumber(item.cost),
+          paid: sanitizeNumber(item.advance)
+        });
+      }
+    });
+  });
+  
+  return vendors;
 }
 
 function renderShareLinkOutput() {
@@ -1094,6 +1383,7 @@ function onWeddingMetaChanged() {
   state.meta.coupleName = dom.coupleNameInput.value;
   state.meta.primaryVenue = dom.primaryVenueInput.value;
   state.meta.weddingDate = dom.weddingDateInput.value;
+  state.meta.totalBudget = sanitizeNumber(dom.totalBudgetInput.value) || 20000;
   saveAndRender();
 }
 
@@ -1379,6 +1669,7 @@ function onMaterialAdd(event) {
     vendor: sanitizeText(formData.get("vendor")),
     status: sanitizeMaterialStatus(formData.get("status")),
     cost: sanitizeNumber(formData.get("cost")),
+    advance: sanitizeNumber(formData.get("advance")),
   });
 
   dom.materialForm.reset();
@@ -1427,6 +1718,7 @@ function onFoodAdd(event) {
     vendor: sanitizeText(formData.get("vendor")),
     servings: sanitizeInteger(formData.get("servings"), 0),
     cost: sanitizeNumber(formData.get("cost")),
+    advance: sanitizeNumber(formData.get("advance")),
   });
 
   dom.foodForm.reset();
@@ -1472,6 +1764,7 @@ function onDecorAdd(event) {
     theme: sanitizeText(formData.get("theme")),
     status: sanitizeDecorStatus(formData.get("status")),
     cost: sanitizeNumber(formData.get("cost")),
+    advance: sanitizeNumber(formData.get("advance")),
   });
 
   dom.decorForm.reset();
@@ -1520,6 +1813,7 @@ function onDjAdd(event) {
     type: sanitizeText(formData.get("type")),
     notes: sanitizeText(formData.get("notes")),
     cost: sanitizeNumber(formData.get("cost")),
+    advance: sanitizeNumber(formData.get("advance")),
   });
 
   dom.djForm.reset();
@@ -1562,9 +1856,11 @@ function onFavorAdd(event) {
     id: createId("favor"),
     item,
     qty: sanitizeInteger(formData.get("qty"), 1),
+    vendor: sanitizeText(formData.get("vendor")),
     target: sanitizeText(formData.get("target")),
     notes: sanitizeText(formData.get("notes")),
     cost: sanitizeNumber(formData.get("cost")),
+    advance: sanitizeNumber(formData.get("advance")),
   });
 
   dom.favorForm.reset();
