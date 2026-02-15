@@ -275,163 +275,86 @@ async function copyToClipboard(text) {
 }
 
 function createDefaultState() {
-  const guests = [
-    guestSeed("guest_family_1", "Bride's Family", "family", 15, "+91-98100-1101", "Bride's immediate family and close relatives"),
-    guestSeed("guest_family_2", "Groom's Family", "family", 18, "+91-98100-1102", "Groom's immediate family and close relatives"),
-    guestSeed("guest_gf_1", "Bride's Girlfriends", "girlfriend", 8, "+91-98100-2201", "College and childhood friends"),
-    guestSeed("guest_friend_1", "Groom's Friends", "friends", 12, "+91-98100-3301", "School and college friends"),
-    guestSeed("guest_cousin_1", "Extended Family", "cousins", 20, "+91-98100-4401", "Cousins and extended relatives"),
-    guestSeed("guest_colleagues_1", "Work Colleagues", "colleagues", 10, "", "Office colleagues"),
-    guestSeed("guest_vip_1", "Special Guests", "vip", 7, "+91-98100-5501", "Family friends and VIPs"),
-  ];
-
-  const allGuestIds = guests.map((guest) => guest.id);
-  const familyAndVipIds = guests.filter((guest) => guest.group === "family" || guest.group === "vip").map((guest) => guest.id);
-  const girlfriendIds = guests.filter((guest) => guest.group === "girlfriend").map((guest) => guest.id);
-  const friendsAndCousins = guests
-    .filter((guest) => guest.group === "friends" || guest.group === "cousins")
-    .map((guest) => guest.id);
+  const guests = [];
 
   const events = [
     {
       id: "event_engagement",
       name: "Engagement",
-      date: "2026-11-18",
-      venue: "Grand Sapphire Banquet",
-      notes: "Ring exchange, family introductions, and welcome dinner.",
-      invitedGuestIds: [...familyAndVipIds, ...friendsAndCousins],
-      tasks: [
-        taskSeed("Ring tray setup and flowers", "Priya", "in_progress", "2026-11-15"),
-        taskSeed("Confirm photographer shot list", "Rohan", "pending", "2026-11-14"),
-      ],
-      materials: [
-        materialSeed("Ring tray", 1, "StyleCraft", "ordered", 3500),
-        materialSeed("Welcome signage", 3, "Print Studio", "pending", 2200),
-      ],
-      food: [
-        foodSeed("Chaat live counter", "Starters", "Royal Caterers", 150, 18000),
-        foodSeed("Rasmalai", "Dessert", "Royal Caterers", 120, 9000),
-      ],
-      decor: [
-        decorSeed("Pastel stage floral wall", "Bloom Decor", "Pastel", "approved", 28000),
-      ],
-      dj: [djSeed("7:00 PM", "DJ Ayaan", "Soft lounge", "Entry and welcome set", 12000)],
-      favors: [favorSeed("Dry fruit box", 150, "All guests", "Personalized sleeve", 13500)],
+      date: "",
+      venue: "",
+      notes: "",
+      invitedGuestIds: [],
+      tasks: [],
+      materials: [],
+      food: [],
+      decor: [],
+      dj: [],
+      favors: [],
     },
     {
       id: "event_haldi",
       name: "Haldi",
-      date: "2026-11-19",
-      venue: "Verma Residence Lawn",
-      notes: "Morning ritual with marigold setup and dhol procession.",
-      invitedGuestIds: [...familyAndVipIds, ...friendsAndCousins],
-      tasks: [
-        taskSeed("Arrange haldi platters and stools", "Neel", "pending", "2026-11-18"),
-        taskSeed("Prepare turmeric-safe outfit stations", "Sakshi", "pending", "2026-11-18"),
-      ],
-      materials: [
-        materialSeed("Haldi bowls", 12, "Pooja Bazaar", "ordered", 2400),
-        materialSeed("Marigold garlands", 45, "Phool Mandi", "pending", 6700),
-      ],
-      food: [
-        foodSeed("Poha and chai station", "Breakfast", "Home Caterers", 90, 6500),
-        foodSeed("Fresh jalebi", "Snacks", "Home Caterers", 120, 4300),
-      ],
-      decor: [
-        decorSeed("Marigold photobooth", "Bloom Decor", "Yellow + Orange", "approved", 18500),
-      ],
-      dj: [djSeed("10:30 AM", "Dhol Team Utsav", "Dhol", "Haldi entry beats", 9000)],
-      favors: [favorSeed("Mini ubtan jars", 100, "Close guests", "Eco-friendly labels", 7500)],
+      date: "",
+      venue: "",
+      notes: "",
+      invitedGuestIds: [],
+      tasks: [],
+      materials: [],
+      food: [],
+      decor: [],
+      dj: [],
+      favors: [],
     },
     {
       id: "event_mehndi",
       name: "Mehndi",
-      date: "2026-11-19",
-      venue: "Terrace Garden Pavilion",
-      notes: "Girlfriends and close family focused celebration with artist corners and live songs.",
-      invitedGuestIds: [...familyAndVipIds, ...girlfriendIds],
-      tasks: [
-        taskSeed("Finalize mehndi artist rotation", "Ria", "in_progress", "2026-11-17"),
-        taskSeed("Create bride + bridesmaid seat chart", "Meher", "pending", "2026-11-17"),
-      ],
-      materials: [
-        materialSeed("Mehndi cones", 220, "Henna House", "ordered", 5400),
-        materialSeed("Cushion floor seating", 40, "Event Basket", "pending", 8000),
-      ],
-      food: [
-        foodSeed("Kulhad lassi bar", "Drinks", "Royal Caterers", 140, 6400),
-        foodSeed("Street-style golgappa", "Live counter", "Royal Caterers", 150, 12000),
-      ],
-      decor: [
-        decorSeed("Boho floral umbrellas", "Bloom Decor", "Pink + Orange", "approved", 21000),
-      ],
-      dj: [djSeed("4:00 PM", "Live folk duo", "Live music", "Light folk and sufi", 15000)],
-      favors: [favorSeed("Bangle pouches", 90, "Bride-side girls", "Color-coded by table", 8800)],
+      date: "",
+      venue: "",
+      notes: "",
+      invitedGuestIds: [],
+      tasks: [],
+      materials: [],
+      food: [],
+      decor: [],
+      dj: [],
+      favors: [],
     },
     {
       id: "event_sangeet",
       name: "Sangeet",
-      date: "2026-11-20",
-      venue: "Crystal Ballroom",
-      notes: "High-energy dance night with family performances and DJ set.",
-      invitedGuestIds: [...allGuestIds],
-      tasks: [
-        taskSeed("Run family dance rehearsal", "Arjun", "in_progress", "2026-11-18"),
-        taskSeed("Cue sheet for emcee and DJ", "Naina", "pending", "2026-11-18"),
-      ],
-      materials: [
-        materialSeed("Wireless mic kits", 6, "AV Rentals", "ordered", 16000),
-        materialSeed("LED wristbands", 180, "Glow Supply", "pending", 14500),
-      ],
-      food: [
-        foodSeed("Paneer tikka station", "Starters", "Royal Caterers", 200, 30000),
-        foodSeed("Mocktail island", "Drinks", "Royal Caterers", 220, 18500),
-      ],
-      decor: [
-        decorSeed("Dance floor lighting truss", "LightLab Events", "Purple + Gold", "approved", 41000),
-      ],
-      dj: [
-        djSeed("7:30 PM", "Family Performance Block", "Dance performances", "8 choreographed entries", 0),
-        djSeed("9:00 PM", "DJ VibeNation", "DJ", "Bollywood + Punjabi set", 28000),
-      ],
-      favors: [favorSeed("Earrings gift set", 120, "Women invited from guest list", "Packed in gold pouches", 25200)],
+      date: "",
+      venue: "",
+      notes: "",
+      invitedGuestIds: [],
+      tasks: [],
+      materials: [],
+      food: [],
+      decor: [],
+      dj: [],
+      favors: [],
     },
     {
       id: "event_wedding",
       name: "Wedding",
-      date: "2026-11-21",
-      venue: "Royal Palace Lawn",
-      notes: "Baraat, varmala, pheras, and dinner reception in one flow.",
-      invitedGuestIds: [...allGuestIds],
-      tasks: [
-        taskSeed("Mandap inspection and fire safety check", "Neel", "pending", "2026-11-20"),
-        taskSeed("Baraat route and welcome teams", "Rajesh", "in_progress", "2026-11-20"),
-      ],
-      materials: [
-        materialSeed("Mandap seating cushions", 80, "Event Basket", "ordered", 22000),
-        materialSeed("Phera samagri kits", 3, "Pooja Bazaar", "pending", 7500),
-      ],
-      food: [
-        foodSeed("North Indian buffet spread", "Dinner", "Royal Caterers", 320, 190000),
-        foodSeed("Live jalebi-rabri", "Dessert", "Royal Caterers", 250, 24000),
-      ],
-      decor: [
-        decorSeed("Mandap floral dome", "Bloom Decor", "Ivory + Red", "approved", 78000),
-        decorSeed("Baraat gate entrance", "Bloom Decor", "Traditional", "pending", 22000),
-      ],
-      dj: [
-        djSeed("6:30 PM", "Baraat dhol squad", "Dhol", "Route from gate to stage", 18000),
-        djSeed("11:00 PM", "Post-phere music", "DJ", "Soft celebration set", 12000),
-      ],
-      favors: [favorSeed("Silver coin keepsake", 260, "All wedding guests", "Packed with thank-you card", 52000)],
+      date: "",
+      venue: "",
+      notes: "",
+      invitedGuestIds: [],
+      tasks: [],
+      materials: [],
+      food: [],
+      decor: [],
+      dj: [],
+      favors: [],
     },
   ];
 
   return {
     meta: {
-      coupleName: "Aarav and Anaya",
-      primaryVenue: "Royal Palace Lawn",
-      weddingDate: "2026-11-21",
+      coupleName: "",
+      primaryVenue: "",
+      weddingDate: "",
       totalBudget: 20000,
     },
     guests,
