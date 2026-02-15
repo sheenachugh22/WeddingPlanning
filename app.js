@@ -4,6 +4,8 @@ const SHARE_PARAM = "plan";
 const dom = {};
 let state = createDefaultState();
 let activeTab = "overview";
+let currentEditingGuestId = null;
+let selectedPlanningEventIds = [];
 
 document.addEventListener("DOMContentLoaded", () => {
   cacheDom();
@@ -11,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadInitialState();
   renderAll();
   updateCountdown();
-  setInterval(updateCountdown, 60000); // Update countdown every minute
+  setInterval(updateCountdown, 1000); // Update countdown every second so day change at midnight is reflected
 });
 
 function cacheDom() {
@@ -41,6 +43,7 @@ function cacheDom() {
   dom.statBudget = document.getElementById("statBudget");
   dom.shareLinkOutput = document.getElementById("shareLinkOutput");
   dom.copyLinkBtn = document.getElementById("copyLinkBtn");
+  dom.printMasterPlanBtn = document.getElementById("printMasterPlanBtn");
   dom.resetPlanBtn = document.getElementById("resetPlanBtn");
 
   // Guests tab
@@ -49,6 +52,7 @@ function cacheDom() {
 
   // Events tab
   dom.addEventForm = document.getElementById("addEventForm");
+  dom.allEventsPreview = document.getElementById("allEventsPreview");
   dom.eventSelect = document.getElementById("eventSelect");
   dom.deleteEventBtn = document.getElementById("deleteEventBtn");
   dom.eventMetaForm = document.getElementById("eventMetaForm");
@@ -58,13 +62,18 @@ function cacheDom() {
   dom.eventNotesInput = document.getElementById("eventNotesInput");
   dom.inviteGroupFilter = document.getElementById("inviteGroupFilter");
   dom.inviteFilteredBtn = document.getElementById("inviteFilteredBtn");
+  dom.selectAllGuestsBtn = document.getElementById("selectAllGuestsBtn");
   dom.clearInvitesBtn = document.getElementById("clearInvitesBtn");
   dom.applyTraditionalScenarioBtn = document.getElementById("applyTraditionalScenarioBtn");
   dom.inviteGuestList = document.getElementById("inviteGuestList");
 
   // Planning tab
+  dom.planningEventCheckboxes = document.getElementById("planningEventCheckboxes");
+  dom.selectedEventsDisplay = document.getElementById("selectedEventsDisplay");
   dom.taskForm = document.getElementById("taskForm");
   dom.taskList = document.getElementById("taskList");
+  dom.vendorForm = document.getElementById("vendorForm");
+  dom.vendorList = document.getElementById("vendorList");
   dom.materialForm = document.getElementById("materialForm");
   dom.materialList = document.getElementById("materialList");
   dom.foodForm = document.getElementById("foodForm");
@@ -84,11 +93,29 @@ function cacheDom() {
   dom.budgetPercentage = document.getElementById("budgetPercentage");
   dom.vendorPaymentsList = document.getElementById("vendorPaymentsList");
   dom.eventBudgetList = document.getElementById("eventBudgetList");
+  dom.budgetVendors = document.getElementById("budgetVendors");
   dom.budgetMaterials = document.getElementById("budgetMaterials");
   dom.budgetFood = document.getElementById("budgetFood");
   dom.budgetDecor = document.getElementById("budgetDecor");
   dom.budgetEntertainment = document.getElementById("budgetEntertainment");
   dom.budgetFavors = document.getElementById("budgetFavors");
+
+  // Invitations tab
+  dom.invitationsSent = document.getElementById("invitationsSent");
+  dom.invitationsPending = document.getElementById("invitationsPending");
+  dom.invitationsTotal = document.getElementById("invitationsTotal");
+  dom.markAllSentBtn = document.getElementById("markAllSentBtn");
+  dom.markAllPendingBtn = document.getElementById("markAllPendingBtn");
+  dom.invitationFilterSelect = document.getElementById("invitationFilterSelect");
+  dom.invitationsList = document.getElementById("invitationsList");
+  dom.printInvitationsBtn = document.getElementById("printInvitationsBtn");
+
+
+  // Print buttons
+  dom.printGuestListBtn = document.getElementById("printGuestListBtn");
+  dom.printEventsBtn = document.getElementById("printEventsBtn");
+  dom.printBudgetBtn = document.getElementById("printBudgetBtn");
+  dom.printExpensesBtn = document.getElementById("printExpensesBtn");
 
   // Toast
   dom.statusToast = document.getElementById("statusToast");
@@ -98,6 +125,18 @@ function cacheDom() {
   dom.closeModal = document.getElementById("closeModal");
   dom.modalShareLink = document.getElementById("modalShareLink");
   dom.modalCopyBtn = document.getElementById("modalCopyBtn");
+  
+  // Guest Names Modal
+  dom.guestNamesModal = document.getElementById("guestNamesModal");
+  dom.closeGuestNamesModal = document.getElementById("closeGuestNamesModal");
+  dom.closeGuestNamesBtn = document.getElementById("closeGuestNamesBtn");
+  dom.guestNamesModalTitle = document.getElementById("guestNamesModalTitle");
+  dom.guestNamesModalDesc = document.getElementById("guestNamesModalDesc");
+  dom.editGroupCount = document.getElementById("editGroupCount");
+  dom.updateGroupCountBtn = document.getElementById("updateGroupCountBtn");
+  dom.countHint = document.getElementById("countHint");
+  dom.addGuestNameForm = document.getElementById("addGuestNameForm");
+  dom.guestNamesList = document.getElementById("guestNamesList");
 }
 
 function bindEvents() {
@@ -111,7 +150,14 @@ function bindEvents() {
   
   // Overview tab
   dom.weddingMetaForm.addEventListener("input", onWeddingMetaChanged);
+  if (dom.weddingDateInput) {
+    dom.weddingDateInput.addEventListener("change", onWeddingMetaChanged);
+    dom.weddingDateInput.addEventListener("input", onWeddingMetaChanged);
+  }
   dom.copyLinkBtn.addEventListener("click", onCopyLink);
+  if (dom.printMasterPlanBtn) {
+    dom.printMasterPlanBtn.addEventListener("click", printMasterPlan);
+  }
   dom.resetPlanBtn.addEventListener("click", onResetPlan);
 
   // Guests tab
@@ -120,18 +166,34 @@ function bindEvents() {
 
   // Events tab
   dom.addEventForm.addEventListener("submit", onEventAdd);
+  if (dom.allEventsPreview) {
+    dom.allEventsPreview.addEventListener("click", onEventPreviewClick);
+  }
   dom.eventSelect.addEventListener("change", onEventSelectionChanged);
   dom.deleteEventBtn.addEventListener("click", onEventDelete);
   dom.eventMetaForm.addEventListener("input", onEventMetaChanged);
+  if (dom.eventDateInput) {
+    dom.eventDateInput.addEventListener("change", onEventMetaChanged);
+  }
+  if (dom.eventVenueInput) {
+    dom.eventVenueInput.addEventListener("change", onEventMetaChanged);
+  }
   dom.inviteGroupFilter.addEventListener("change", renderInviteGuestList);
   dom.inviteFilteredBtn.addEventListener("click", onInviteFilteredGuests);
+  dom.selectAllGuestsBtn.addEventListener("click", onSelectAllGuests);
   dom.clearInvitesBtn.addEventListener("click", onClearInvites);
   dom.applyTraditionalScenarioBtn.addEventListener("click", onApplyTraditionalScenario);
   dom.inviteGuestList.addEventListener("change", onInviteGuestToggle);
 
   // Planning tab
+  if (dom.planningEventCheckboxes) {
+    dom.planningEventCheckboxes.addEventListener("change", onPlanningEventToggle);
+  }
   dom.taskForm.addEventListener("submit", onTaskAdd);
   dom.taskList.addEventListener("click", onTaskAction);
+
+  dom.vendorForm.addEventListener("submit", onVendorAdd);
+  dom.vendorList.addEventListener("click", onVendorAction);
 
   dom.materialForm.addEventListener("submit", onMaterialAdd);
   dom.materialList.addEventListener("click", onMaterialAction);
@@ -148,6 +210,23 @@ function bindEvents() {
   dom.favorForm.addEventListener("submit", onFavorAdd);
   dom.favorList.addEventListener("click", onFavorAction);
   
+  // Invitations tab
+  if (dom.markAllSentBtn) {
+    dom.markAllSentBtn.addEventListener("click", onMarkAllSent);
+  }
+  if (dom.markAllPendingBtn) {
+    dom.markAllPendingBtn.addEventListener("click", onMarkAllPending);
+  }
+  if (dom.invitationFilterSelect) {
+    dom.invitationFilterSelect.addEventListener("change", renderInvitationsList);
+  }
+  if (dom.invitationsList) {
+    dom.invitationsList.addEventListener("click", onInvitationAction);
+  }
+  if (dom.printInvitationsBtn) {
+    dom.printInvitationsBtn.addEventListener("click", printInvitations);
+  }
+  
   // Modal
   if (dom.closeModal) {
     dom.closeModal.addEventListener("click", closeShareModal);
@@ -160,6 +239,34 @@ function bindEvents() {
       if (e.target === dom.shareModal) closeShareModal();
     });
   }
+  
+  // Guest Names Modal
+  if (dom.closeGuestNamesModal) {
+    dom.closeGuestNamesModal.addEventListener("click", closeGuestNamesModal);
+  }
+  if (dom.closeGuestNamesBtn) {
+    dom.closeGuestNamesBtn.addEventListener("click", closeGuestNamesModal);
+  }
+  if (dom.guestNamesModal) {
+    dom.guestNamesModal.addEventListener("click", (e) => {
+      if (e.target === dom.guestNamesModal) closeGuestNamesModal();
+    });
+  }
+  if (dom.updateGroupCountBtn) {
+    dom.updateGroupCountBtn.addEventListener("click", onUpdateGroupCount);
+  }
+  if (dom.addGuestNameForm) {
+    dom.addGuestNameForm.addEventListener("submit", onAddGuestName);
+  }
+  if (dom.guestNamesList) {
+    dom.guestNamesList.addEventListener("click", onGuestNameAction);
+  }
+
+  // Print buttons
+  if (dom.printGuestListBtn) dom.printGuestListBtn.addEventListener("click", printGuestList);
+  if (dom.printEventsBtn) dom.printEventsBtn.addEventListener("click", printEvents);
+  if (dom.printBudgetBtn) dom.printBudgetBtn.addEventListener("click", printBudget);
+  if (dom.printExpensesBtn) dom.printExpensesBtn.addEventListener("click", printExpenses);
 }
 
 // Tab switching
@@ -183,30 +290,96 @@ function switchTab(tabName) {
       content.classList.remove("active");
     }
   });
+  
+  // Initialize planning event selection when switching to planning tab
+  if (tabName === "planning") {
+    if (selectedPlanningEventIds.length === 0 && state.selectedEventId) {
+      selectedPlanningEventIds = [state.selectedEventId];
+      renderPlanningEventCheckboxes();
+    }
+  }
+  
+  // Refresh invitations list when switching to invitations tab
+  if (tabName === "invitations") {
+    renderInvitationsList();
+  }
 }
 
 // Countdown calculator
 function updateCountdown() {
-  const weddingDate = state.meta.weddingDate;
+  if (!dom.countdownDays) {
+    console.log("Countdown element not found");
+    return;
+  }
+  
+  // Use value from input if available (in case state not yet synced), then state, then Wedding event date
+  let weddingDateStr = (dom.weddingDateInput && dom.weddingDateInput.value) || state.meta.weddingDate || "";
+  console.log("Initial wedding date:", weddingDateStr);
+  
+  if (!weddingDateStr || !weddingDateStr.trim()) {
+    if (state.events && Array.isArray(state.events)) {
+      const weddingEvent = state.events.find((e) => e.name && e.name.toLowerCase().includes("wedding"));
+      if (weddingEvent && weddingEvent.date) {
+        weddingDateStr = weddingEvent.date;
+        console.log("Using Wedding event date:", weddingDateStr);
+      }
+    }
+  }
+  
+  const weddingDate = typeof weddingDateStr === "string" ? weddingDateStr.trim() : "";
   if (!weddingDate) {
+    console.log("No wedding date found");
+    dom.countdownDays.textContent = "--";
+    return;
+  }
+  
+  console.log("Processing date:", weddingDate);
+  
+  // Parse as local date (YYYY-MM-DD) to avoid timezone issues
+  const parts = weddingDate.split("-");
+  if (parts.length !== 3) {
+    console.error("Invalid date format:", weddingDate);
+    dom.countdownDays.textContent = "--";
+    return;
+  }
+  
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
+    console.error("Invalid date parts:", { y, m, d });
+    dom.countdownDays.textContent = "--";
+    return;
+  }
+  
+  const wedding = new Date(y, m, d);
+  if (Number.isNaN(wedding.getTime())) {
+    console.error("Invalid date object");
     dom.countdownDays.textContent = "--";
     return;
   }
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const wedding = new Date(weddingDate);
   wedding.setHours(0, 0, 0, 0);
   
   const diffTime = wedding - today;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  
+  console.log("Countdown calculated:", { wedding: wedding.toDateString(), today: today.toDateString(), diffDays });
+  
+  if (Number.isNaN(diffDays)) {
+    dom.countdownDays.textContent = "--";
+    return;
+  }
   
   if (diffDays < 0) {
     dom.countdownDays.textContent = "✓";
   } else if (diffDays === 0) {
     dom.countdownDays.textContent = "TODAY";
   } else {
-    dom.countdownDays.textContent = diffDays;
+    dom.countdownDays.textContent = String(diffDays);
   }
 }
 
@@ -286,6 +459,7 @@ function createDefaultState() {
       notes: "",
       invitedGuestIds: [],
       tasks: [],
+      vendors: [],
       materials: [],
       food: [],
       decor: [],
@@ -300,6 +474,7 @@ function createDefaultState() {
       notes: "",
       invitedGuestIds: [],
       tasks: [],
+      vendors: [],
       materials: [],
       food: [],
       decor: [],
@@ -314,6 +489,7 @@ function createDefaultState() {
       notes: "",
       invitedGuestIds: [],
       tasks: [],
+      vendors: [],
       materials: [],
       food: [],
       decor: [],
@@ -328,6 +504,7 @@ function createDefaultState() {
       notes: "",
       invitedGuestIds: [],
       tasks: [],
+      vendors: [],
       materials: [],
       food: [],
       decor: [],
@@ -342,6 +519,7 @@ function createDefaultState() {
       notes: "",
       invitedGuestIds: [],
       tasks: [],
+      vendors: [],
       materials: [],
       food: [],
       decor: [],
@@ -454,6 +632,8 @@ function normalizeState(raw) {
         group: sanitizeGroup(guest.group),
         phone: sanitizeText(guest.phone),
         notes: sanitizeText(guest.notes),
+        names: Array.isArray(guest.names) ? guest.names.map(n => sanitizeText(n)).filter(Boolean) : [],
+        invitationSent: guest.invitationSent === true,
       }))
     : fallback.guests;
 
@@ -497,6 +677,7 @@ function normalizeEvent(event, guestIdSet) {
       ? event.invitedGuestIds.filter((guestId) => guestIdSet.has(guestId))
       : [],
     tasks: normalizeTaskList(event.tasks),
+    vendors: normalizeVendorList(event.vendors),
     materials: normalizeMaterialList(event.materials),
     food: normalizeFoodList(event.food),
     decor: normalizeDecorList(event.decor),
@@ -515,6 +696,22 @@ function normalizeTaskList(value) {
     owner: sanitizeText(task.owner),
     status: sanitizeTaskStatus(task.status),
     deadline: sanitizeText(task.deadline),
+  }));
+}
+
+function normalizeVendorList(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.map((vendor) => ({
+    id: sanitizeText(vendor.id) || createId("vendor"),
+    vendor: sanitizeText(vendor.vendor),
+    service: sanitizeText(vendor.service),
+    contact: sanitizeText(vendor.contact),
+    cost: sanitizeNumber(vendor.cost),
+    advance: sanitizeNumber(vendor.advance),
+    status: sanitizeVendorStatus(vendor.status),
+    notes: sanitizeText(vendor.notes),
   }));
 }
 
@@ -618,6 +815,11 @@ function sanitizeTaskStatus(status) {
   return valid.has(status) ? status : "pending";
 }
 
+function sanitizeVendorStatus(status) {
+  const valid = new Set(["pending", "contacted", "booked", "confirmed", "completed"]);
+  return valid.has(status) ? status : "pending";
+}
+
 function sanitizeMaterialStatus(status) {
   const valid = new Set(["pending", "ordered", "delivered"]);
   return valid.has(status) ? status : "pending";
@@ -637,15 +839,19 @@ function renderAll() {
   ensureSelectedEvent();
   renderWeddingMeta();
   renderGuestList();
+  renderAllEventsPreview();
   renderEventSelect();
   renderEventMeta();
   renderInviteGuestList();
+  renderPlanningEventCheckboxes();
   renderTaskList();
+  renderVendorList();
   renderMaterialList();
   renderFoodList();
   renderDecorList();
   renderDjList();
   renderFavorList();
+  renderInvitationsList();
   renderStats();
   renderBudget();
   renderShareLinkOutput();
@@ -708,6 +914,9 @@ function updateBudgetTracker() {
 function calculateTotalSpent() {
   let total = 0;
   state.events.forEach(event => {
+    if (event.vendors) {
+      event.vendors.forEach(item => total += sanitizeNumber(item.advance || item.cost));
+    }
     event.materials.forEach(item => total += sanitizeNumber(item.advance || item.cost));
     event.food.forEach(item => total += sanitizeNumber(item.advance || item.cost));
     event.decor.forEach(item => total += sanitizeNumber(item.advance || item.cost));
@@ -737,18 +946,27 @@ function renderGuestList() {
       (guest) => {
         const count = guest.count || 1;
         const countLabel = count === 1 ? '1 person' : `${count} people`;
+        const namesCount = guest.names ? guest.names.length : 0;
+        const namesList = guest.names && guest.names.length > 0 
+          ? `<div class="guest-names-preview"><strong>Names:</strong> ${guest.names.map(escapeHtml).join(', ')}</div>` 
+          : '';
+        
         return `
         <div class="guest-card">
           <div class="guest-info">
             <div class="guest-header">
               <h4>${escapeHtml(guest.name)}</h4>
-              <span class="guest-count">${countLabel}</span>
+              <span class="guest-count">${countLabel}${namesCount > 0 ? ` (${namesCount} named)` : ''}</span>
             </div>
             <div class="guest-meta">
               <span class="guest-badge">${formatGroupLabel(guest.group)}</span>
               ${guest.phone ? `<span>Phone: ${escapeHtml(guest.phone)}</span>` : ""}
               ${guest.notes ? `<span>Notes: ${escapeHtml(guest.notes)}</span>` : ""}
             </div>
+            ${namesList}
+            <button class="manage-names-btn" data-action="manage-names" data-id="${guest.id}">
+              ${namesCount > 0 ? 'Edit Names' : 'Add Names'} (${namesCount}/${count})
+            </button>
           </div>
           <button class="btn-remove" data-action="remove-guest" data-id="${guest.id}">Remove</button>
         </div>
@@ -765,6 +983,48 @@ function renderEventSelect() {
         `<option value="${event.id}" ${event.id === state.selectedEventId ? "selected" : ""}>${escapeHtml(event.name)}</option>`,
     )
     .join("");
+}
+
+function renderAllEventsPreview() {
+  if (!dom.allEventsPreview) return;
+  
+  if (state.events.length === 0) {
+    dom.allEventsPreview.innerHTML = `<p class="muted">No events added yet. Add your first event above!</p>`;
+    return;
+  }
+  
+  dom.allEventsPreview.innerHTML = state.events
+    .map((event) => {
+      const invitedCount = event.invitedGuestIds.length;
+      const totalHeadCount = event.invitedGuestIds
+        .map((id) => state.guests.find((g) => g.id === id))
+        .filter(Boolean)
+        .reduce((sum, guest) => sum + (guest.count || 1), 0);
+      const isSelected = event.id === state.selectedEventId;
+      
+      return `
+        <div class="event-preview-card ${isSelected ? 'selected' : ''}" data-event-id="${event.id}">
+          <div class="event-preview-title">${escapeHtml(event.name)}</div>
+          <div class="event-preview-info">
+            ${event.date ? `<div class="event-preview-stat">📅 ${escapeHtml(event.date)}</div>` : ''}
+            ${event.venue ? `<div class="event-preview-stat">📍 ${escapeHtml(event.venue)}</div>` : ''}
+            <div class="event-preview-stat">👥 ${invitedCount} ${invitedCount === 1 ? 'group' : 'groups'} • ${totalHeadCount} ${totalHeadCount === 1 ? 'person' : 'people'}</div>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function onEventPreviewClick(e) {
+  const card = e.target.closest('.event-preview-card');
+  if (!card) return;
+  
+  const eventId = card.dataset.eventId;
+  if (eventId && eventId !== state.selectedEventId) {
+    state.selectedEventId = eventId;
+    saveAndRender();
+  }
 }
 
 function renderEventMeta() {
@@ -816,22 +1076,124 @@ function renderInviteGuestList() {
     .join("");
 }
 
+function renderPlanningEventCheckboxes() {
+  if (!dom.planningEventCheckboxes) return;
+  
+  if (state.events.length === 0) {
+    dom.planningEventCheckboxes.innerHTML = '<p class="muted">No events available</p>';
+    return;
+  }
+  
+  // Initialize selectedPlanningEventIds with current event if empty
+  if (selectedPlanningEventIds.length === 0 && state.selectedEventId) {
+    selectedPlanningEventIds = [state.selectedEventId];
+  }
+  
+  dom.planningEventCheckboxes.innerHTML = state.events
+    .map(event => {
+      const isChecked = selectedPlanningEventIds.includes(event.id);
+      return `
+        <label class="event-checkbox-item ${isChecked ? 'selected' : ''}" data-event-id="${event.id}">
+          <input 
+            type="checkbox" 
+            value="${event.id}" 
+            ${isChecked ? 'checked' : ''}
+          />
+          <span class="event-checkbox-label">${escapeHtml(event.name)}</span>
+        </label>
+      `;
+    })
+    .join('');
+  
+  updateSelectedEventsDisplay();
+}
+
+function updateSelectedEventsDisplay() {
+  if (!dom.selectedEventsDisplay) return;
+  
+  if (selectedPlanningEventIds.length === 0) {
+    dom.selectedEventsDisplay.textContent = 'None - Please select at least one event';
+    dom.selectedEventsDisplay.style.color = 'var(--danger)';
+    return;
+  }
+  
+  const selectedNames = selectedPlanningEventIds
+    .map(id => {
+      const event = state.events.find(e => e.id === id);
+      return event ? event.name : null;
+    })
+    .filter(Boolean)
+    .join(', ');
+  
+  dom.selectedEventsDisplay.textContent = selectedNames;
+  dom.selectedEventsDisplay.style.color = 'var(--text-secondary)';
+}
+
+function onPlanningEventToggle(e) {
+  const checkbox = e.target;
+  if (!(checkbox instanceof HTMLInputElement) || checkbox.type !== 'checkbox') {
+    return;
+  }
+  
+  const eventId = checkbox.value;
+  const label = checkbox.closest('.event-checkbox-item');
+  
+  if (checkbox.checked) {
+    if (!selectedPlanningEventIds.includes(eventId)) {
+      selectedPlanningEventIds.push(eventId);
+    }
+    if (label) label.classList.add('selected');
+  } else {
+    selectedPlanningEventIds = selectedPlanningEventIds.filter(id => id !== eventId);
+    if (label) label.classList.remove('selected');
+  }
+  
+  updateSelectedEventsDisplay();
+}
+
+function getSelectedEvents() {
+  return selectedPlanningEventIds
+    .map(id => state.events.find(e => e.id === id))
+    .filter(Boolean);
+}
+
 function renderTaskList() {
-  const event = currentEvent();
-  if (!event || !event.tasks.length) {
-    dom.taskList.innerHTML = `<div class="muted text-center">No tasks yet</div>`;
+  const selectedEvents = getSelectedEvents();
+  
+  if (selectedEvents.length === 0) {
+    dom.taskList.innerHTML = `<div class="muted text-center">Please select at least one event to view/add tasks</div>`;
+    return;
+  }
+  
+  // Collect all tasks from selected events
+  const allTasks = [];
+  selectedEvents.forEach(event => {
+    if (event.tasks && event.tasks.length > 0) {
+      event.tasks.forEach(task => {
+        allTasks.push({
+          ...task,
+          eventName: event.name,
+          eventId: event.id
+        });
+      });
+    }
+  });
+  
+  if (allTasks.length === 0) {
+    dom.taskList.innerHTML = `<div class="muted text-center">No tasks yet for selected events</div>`;
     return;
   }
 
-  dom.taskList.innerHTML = event.tasks
+  dom.taskList.innerHTML = allTasks
     .map(
       (task) => `
       <div class="tracker-item">
         <div class="tracker-item-header">
           <div class="tracker-item-title">${escapeHtml(task.title)}</div>
-          <button class="btn-icon" data-action="remove-task" data-id="${task.id}">✕</button>
+          <button class="btn-icon" data-action="remove-task" data-id="${task.id}" data-event-id="${task.eventId}">✕</button>
         </div>
         <div class="tracker-item-meta">
+          <span class="event-tag">${escapeHtml(task.eventName)}</span>
           ${task.owner ? `<span>Owner: ${escapeHtml(task.owner)}</span>` : ""}
           <span>${formatTaskStatus(task.status)}</span>
           ${task.deadline ? `<span>Due: ${escapeHtml(task.deadline)}</span>` : ""}
@@ -851,14 +1213,85 @@ function formatTaskStatus(status) {
   return statusMap[status] || status;
 }
 
-function renderMaterialList() {
+function renderVendorList() {
   const event = currentEvent();
-  if (!event || !event.materials.length) {
-    dom.materialList.innerHTML = `<div class="muted text-center">No materials yet</div>`;
+  if (!event || !event.vendors || !event.vendors.length) {
+    dom.vendorList.innerHTML = `<div class="muted text-center">No vendor bookings yet</div>`;
     return;
   }
 
-  dom.materialList.innerHTML = event.materials
+  dom.vendorList.innerHTML = event.vendors
+    .map(
+      (vendor) => {
+        const cost = sanitizeNumber(vendor.cost);
+        const advance = sanitizeNumber(vendor.advance);
+        const pending = cost - advance;
+        return `
+      <div class="tracker-item">
+        <div class="tracker-item-header">
+          <div class="tracker-item-title">${escapeHtml(vendor.vendor)}</div>
+          <button class="btn-icon" data-action="remove-vendor" data-id="${vendor.id}">✕</button>
+        </div>
+        <div class="tracker-item-meta">
+          <span><strong>${escapeHtml(vendor.service)}</strong></span>
+          ${vendor.contact ? `<span>Contact: ${escapeHtml(vendor.contact)}</span>` : ""}
+          <span>${formatVendorStatus(vendor.status)}</span>
+          ${vendor.notes ? `<span>Notes: ${escapeHtml(vendor.notes)}</span>` : ""}
+        </div>
+        ${cost > 0 ? `
+        <div class="payment-details">
+          <span class="payment-label">Total: ${formatCAD(cost)}</span>
+          ${advance > 0 ? `<span class="payment-paid">Paid: ${formatCAD(advance)}</span>` : ""}
+          ${pending > 0 ? `<span class="payment-pending">Pending: ${formatCAD(pending)}</span>` : ""}
+        </div>
+        ` : ""}
+      </div>
+    `;
+      }
+    )
+    .join("");
+}
+
+function formatVendorStatus(status) {
+  const statusMap = {
+    pending: "Pending",
+    contacted: "Contacted",
+    booked: "Booked",
+    confirmed: "Confirmed",
+    completed: "Completed"
+  };
+  return statusMap[status] || status;
+}
+
+
+function renderMaterialList() {
+  const selectedEvents = getSelectedEvents();
+  
+  if (selectedEvents.length === 0) {
+    dom.materialList.innerHTML = `<div class="muted text-center">Please select at least one event to view/add materials</div>`;
+    return;
+  }
+  
+  // Collect all materials from selected events
+  const allMaterials = [];
+  selectedEvents.forEach(event => {
+    if (event.materials && event.materials.length > 0) {
+      event.materials.forEach(material => {
+        allMaterials.push({
+          ...material,
+          eventName: event.name,
+          eventId: event.id
+        });
+      });
+    }
+  });
+  
+  if (allMaterials.length === 0) {
+    dom.materialList.innerHTML = `<div class="muted text-center">No materials yet for selected events</div>`;
+    return;
+  }
+
+  dom.materialList.innerHTML = allMaterials
     .map(
       (material) => {
         const cost = sanitizeNumber(material.cost);
@@ -868,9 +1301,10 @@ function renderMaterialList() {
       <div class="tracker-item">
         <div class="tracker-item-header">
           <div class="tracker-item-title">${escapeHtml(material.item)}</div>
-          <button class="btn-icon" data-action="remove-material" data-id="${material.id}">✕</button>
+          <button class="btn-icon" data-action="remove-material" data-id="${material.id}" data-event-id="${material.eventId}">✕</button>
         </div>
         <div class="tracker-item-meta">
+          <span class="event-tag">${escapeHtml(material.eventName)}</span>
           <span>Qty: ${escapeHtml(String(material.qty))}</span>
           ${material.vendor ? `<span>Vendor: ${escapeHtml(material.vendor)}</span>` : ""}
           <span>${formatMaterialStatus(material.status)}</span>
@@ -899,13 +1333,32 @@ function formatMaterialStatus(status) {
 }
 
 function renderFoodList() {
-  const event = currentEvent();
-  if (!event || !event.food.length) {
-    dom.foodList.innerHTML = `<div class="muted text-center">No food items yet</div>`;
+  const selectedEvents = getSelectedEvents();
+
+  if (selectedEvents.length === 0) {
+    dom.foodList.innerHTML = `<div class="muted text-center">Please select at least one event to view/add food items</div>`;
     return;
   }
 
-  dom.foodList.innerHTML = event.food
+  const allFood = [];
+  selectedEvents.forEach(event => {
+    if (event.food && event.food.length > 0) {
+      event.food.forEach(food => {
+        allFood.push({
+          ...food,
+          eventName: event.name,
+          eventId: event.id
+        });
+      });
+    }
+  });
+
+  if (allFood.length === 0) {
+    dom.foodList.innerHTML = `<div class="muted text-center">No food items yet for selected events</div>`;
+    return;
+  }
+
+  dom.foodList.innerHTML = allFood
     .map(
       (food) => {
         const cost = sanitizeNumber(food.cost);
@@ -915,9 +1368,10 @@ function renderFoodList() {
       <div class="tracker-item">
         <div class="tracker-item-header">
           <div class="tracker-item-title">${escapeHtml(food.dish)}</div>
-          <button class="btn-icon" data-action="remove-food" data-id="${food.id}">✕</button>
+          <button class="btn-icon" data-action="remove-food" data-id="${food.id}" data-event-id="${food.eventId}">✕</button>
         </div>
         <div class="tracker-item-meta">
+          <span class="event-tag">${escapeHtml(food.eventName)}</span>
           ${food.course ? `<span>${escapeHtml(food.course)}</span>` : ""}
           ${food.vendor ? `<span>Caterer: ${escapeHtml(food.vendor)}</span>` : ""}
           ${food.servings ? `<span>Servings: ${escapeHtml(String(food.servings))}</span>` : ""}
@@ -937,13 +1391,32 @@ function renderFoodList() {
 }
 
 function renderDecorList() {
-  const event = currentEvent();
-  if (!event || !event.decor.length) {
-    dom.decorList.innerHTML = `<div class="muted text-center">No decor items yet</div>`;
+  const selectedEvents = getSelectedEvents();
+
+  if (selectedEvents.length === 0) {
+    dom.decorList.innerHTML = `<div class="muted text-center">Please select at least one event to view/add decor items</div>`;
     return;
   }
 
-  dom.decorList.innerHTML = event.decor
+  const allDecor = [];
+  selectedEvents.forEach(event => {
+    if (event.decor && event.decor.length > 0) {
+      event.decor.forEach(decor => {
+        allDecor.push({
+          ...decor,
+          eventName: event.name,
+          eventId: event.id
+        });
+      });
+    }
+  });
+
+  if (allDecor.length === 0) {
+    dom.decorList.innerHTML = `<div class="muted text-center">No decor items yet for selected events</div>`;
+    return;
+  }
+
+  dom.decorList.innerHTML = allDecor
     .map(
       (decor) => {
         const cost = sanitizeNumber(decor.cost);
@@ -953,9 +1426,10 @@ function renderDecorList() {
       <div class="tracker-item">
         <div class="tracker-item-header">
           <div class="tracker-item-title">${escapeHtml(decor.element)}</div>
-          <button class="btn-icon" data-action="remove-decor" data-id="${decor.id}">✕</button>
+          <button class="btn-icon" data-action="remove-decor" data-id="${decor.id}" data-event-id="${decor.eventId}">✕</button>
         </div>
         <div class="tracker-item-meta">
+          <span class="event-tag">${escapeHtml(decor.eventName)}</span>
           ${decor.vendor ? `<span>Decorator: ${escapeHtml(decor.vendor)}</span>` : ""}
           ${decor.theme ? `<span>Theme: ${escapeHtml(decor.theme)}</span>` : ""}
           <span>${formatDecorStatus(decor.status)}</span>
@@ -984,13 +1458,32 @@ function formatDecorStatus(status) {
 }
 
 function renderDjList() {
-  const event = currentEvent();
-  if (!event || !event.dj.length) {
-    dom.djList.innerHTML = `<div class="muted text-center">No entertainment items yet</div>`;
+  const selectedEvents = getSelectedEvents();
+
+  if (selectedEvents.length === 0) {
+    dom.djList.innerHTML = `<div class="muted text-center">Please select at least one event to view/add entertainment items</div>`;
     return;
   }
 
-  dom.djList.innerHTML = event.dj
+  const allDj = [];
+  selectedEvents.forEach(event => {
+    if (event.dj && event.dj.length > 0) {
+      event.dj.forEach(dj => {
+        allDj.push({
+          ...dj,
+          eventName: event.name,
+          eventId: event.id
+        });
+      });
+    }
+  });
+
+  if (allDj.length === 0) {
+    dom.djList.innerHTML = `<div class="muted text-center">No entertainment items yet for selected events</div>`;
+    return;
+  }
+
+  dom.djList.innerHTML = allDj
     .map(
       (dj) => {
         const cost = sanitizeNumber(dj.cost);
@@ -1000,9 +1493,10 @@ function renderDjList() {
       <div class="tracker-item">
         <div class="tracker-item-header">
           <div class="tracker-item-title">Time: ${escapeHtml(dj.slot)}</div>
-          <button class="btn-icon" data-action="remove-dj" data-id="${dj.id}">✕</button>
+          <button class="btn-icon" data-action="remove-dj" data-id="${dj.id}" data-event-id="${dj.eventId}">✕</button>
         </div>
         <div class="tracker-item-meta">
+          <span class="event-tag">${escapeHtml(dj.eventName)}</span>
           ${dj.performer ? `<span>Vendor: ${escapeHtml(dj.performer)}</span>` : ""}
           ${dj.type ? `<span>Type: ${escapeHtml(dj.type)}</span>` : ""}
           ${dj.notes ? `<span>Notes: ${escapeHtml(dj.notes)}</span>` : ""}
@@ -1022,13 +1516,32 @@ function renderDjList() {
 }
 
 function renderFavorList() {
-  const event = currentEvent();
-  if (!event || !event.favors.length) {
-    dom.favorList.innerHTML = `<div class="muted text-center">No favors yet</div>`;
+  const selectedEvents = getSelectedEvents();
+
+  if (selectedEvents.length === 0) {
+    dom.favorList.innerHTML = `<div class="muted text-center">Please select at least one event to view/add favors</div>`;
     return;
   }
 
-  dom.favorList.innerHTML = event.favors
+  const allFavors = [];
+  selectedEvents.forEach(event => {
+    if (event.favors && event.favors.length > 0) {
+      event.favors.forEach(favor => {
+        allFavors.push({
+          ...favor,
+          eventName: event.name,
+          eventId: event.id
+        });
+      });
+    }
+  });
+
+  if (allFavors.length === 0) {
+    dom.favorList.innerHTML = `<div class="muted text-center">No favors yet for selected events</div>`;
+    return;
+  }
+
+  dom.favorList.innerHTML = allFavors
     .map(
       (favor) => {
         const cost = sanitizeNumber(favor.cost);
@@ -1038,9 +1551,10 @@ function renderFavorList() {
       <div class="tracker-item">
         <div class="tracker-item-header">
           <div class="tracker-item-title">${escapeHtml(favor.item)}</div>
-          <button class="btn-icon" data-action="remove-favor" data-id="${favor.id}">✕</button>
+          <button class="btn-icon" data-action="remove-favor" data-id="${favor.id}" data-event-id="${favor.eventId}">✕</button>
         </div>
         <div class="tracker-item-meta">
+          <span class="event-tag">${escapeHtml(favor.eventName)}</span>
           <span>Qty: ${escapeHtml(String(favor.qty))}</span>
           ${favor.vendor ? `<span>Vendor: ${escapeHtml(favor.vendor)}</span>` : ""}
           ${favor.target ? `<span>For: ${escapeHtml(favor.target)}</span>` : ""}
@@ -1150,13 +1664,13 @@ function renderBudget() {
     .map(
       (event) => {
         const eventTotal = eventCost(event);
-        const eventSpent = eventSpent(event);
+        const eventPaid = eventSpent(event);
         return `
       <div class="event-budget-item">
         <div class="event-budget-name">${escapeHtml(event.name)}</div>
         <div class="event-budget-amounts">
           <div class="event-budget-amount">${formatCAD(eventTotal)}</div>
-          <div class="event-budget-spent">Paid: ${formatCAD(eventSpent)}</div>
+          <div class="event-budget-spent">Paid: ${formatCAD(eventPaid)}</div>
         </div>
       </div>
     `;
@@ -1165,6 +1679,10 @@ function renderBudget() {
     .join("");
   
   // Category budget breakdown
+  const vendorsCost = state.events.reduce(
+    (sum, event) => sum + (event.vendors ? event.vendors.reduce((s, item) => s + sanitizeNumber(item.cost), 0) : 0),
+    0
+  );
   const materialsCost = state.events.reduce(
     (sum, event) => sum + event.materials.reduce((s, item) => s + sanitizeNumber(item.cost), 0),
     0
@@ -1186,6 +1704,9 @@ function renderBudget() {
     0
   );
   
+  if (dom.budgetVendors) {
+    dom.budgetVendors.textContent = formatCAD(vendorsCost);
+  }
   dom.budgetMaterials.textContent = formatCAD(materialsCost);
   dom.budgetFood.textContent = formatCAD(foodCost);
   dom.budgetDecor.textContent = formatCAD(decorCost);
@@ -1196,6 +1717,9 @@ function renderBudget() {
 function calculateTotalCost() {
   let total = 0;
   state.events.forEach(event => {
+    if (event.vendors) {
+      event.vendors.forEach(item => total += sanitizeNumber(item.cost));
+    }
     event.materials.forEach(item => total += sanitizeNumber(item.cost));
     event.food.forEach(item => total += sanitizeNumber(item.cost));
     event.decor.forEach(item => total += sanitizeNumber(item.cost));
@@ -1207,6 +1731,9 @@ function calculateTotalCost() {
 
 function eventSpent(event) {
   let spent = 0;
+  if (event.vendors) {
+    event.vendors.forEach(item => spent += sanitizeNumber(item.advance));
+  }
   event.materials.forEach(item => spent += sanitizeNumber(item.advance));
   event.food.forEach(item => spent += sanitizeNumber(item.advance));
   event.decor.forEach(item => spent += sanitizeNumber(item.advance));
@@ -1219,6 +1746,22 @@ function getAllVendorPayments() {
   const vendors = [];
   
   state.events.forEach(event => {
+    // Vendor bookings
+    if (event.vendors) {
+      event.vendors.forEach(item => {
+        if (item.vendor && item.cost > 0) {
+          vendors.push({
+            vendor: item.vendor,
+            category: item.service || 'Vendor',
+            event: event.name,
+            item: item.service,
+            total: sanitizeNumber(item.cost),
+            paid: sanitizeNumber(item.advance)
+          });
+        }
+      });
+    }
+    
     event.materials.forEach(item => {
       if (item.vendor && item.cost > 0) {
         vendors.push({
@@ -1293,7 +1836,12 @@ function renderShareLinkOutput() {
 }
 
 function eventCost(event) {
+  let total = 0;
+  if (event.vendors) {
+    total += event.vendors.reduce((sum, item) => sum + sanitizeNumber(item.cost), 0);
+  }
   return (
+    total +
     event.materials.reduce((sum, item) => sum + sanitizeNumber(item.cost), 0) +
     event.food.reduce((sum, item) => sum + sanitizeNumber(item.cost), 0) +
     event.decor.reduce((sum, item) => sum + sanitizeNumber(item.cost), 0) +
@@ -1308,6 +1856,7 @@ function onWeddingMetaChanged() {
   state.meta.weddingDate = dom.weddingDateInput.value;
   state.meta.totalBudget = sanitizeNumber(dom.totalBudgetInput.value) || 20000;
   saveAndRender();
+  updateCountdown(); // Force countdown update when date changes
 }
 
 
@@ -1336,6 +1885,8 @@ function onGuestAdd(event) {
     group: sanitizeGroup(String(formData.get("group") || "")),
     phone: sanitizeText(formData.get("phone")),
     notes: sanitizeText(formData.get("notes")),
+    names: [], // Array to store individual guest names
+    invitationSent: false, // Track if invitation was sent
   });
 
   dom.guestForm.reset();
@@ -1352,21 +1903,198 @@ function onGuestAction(event) {
     return;
   }
 
-  if (target.dataset.action !== "remove-guest") {
-    return;
-  }
-
+  const action = target.dataset.action;
   const guestId = target.dataset.id;
-  if (!guestId) {
+  
+  if (!action || !guestId) {
     return;
   }
 
-  state.guests = state.guests.filter((guest) => guest.id !== guestId);
-  state.events.forEach((item) => {
-    item.invitedGuestIds = item.invitedGuestIds.filter((id) => id !== guestId);
-  });
-  saveAndRender("Guest removed");
+  if (action === "manage-names") {
+    openGuestNamesModal(guestId);
+    return;
+  }
+
+  if (action === "remove-guest") {
+    state.guests = state.guests.filter((guest) => guest.id !== guestId);
+    state.events.forEach((item) => {
+      item.invitedGuestIds = item.invitedGuestIds.filter((id) => id !== guestId);
+    });
+    saveAndRender("Guest removed");
+  }
 }
+
+function openGuestNamesModal(guestId) {
+  const guest = state.guests.find(g => g.id === guestId);
+  if (!guest) return;
+  
+  currentEditingGuestId = guestId;
+  
+  dom.guestNamesModalTitle.textContent = `Manage Names - ${guest.name}`;
+  dom.guestNamesModalDesc.textContent = `Edit group count and add individual names`;
+  
+  // Set current count
+  if (dom.editGroupCount) {
+    dom.editGroupCount.value = guest.count || 1;
+  }
+  
+  updateCountHint();
+  renderGuestNamesList();
+  
+  if (dom.guestNamesModal) {
+    dom.guestNamesModal.classList.add("show");
+  }
+}
+
+function updateCountHint() {
+  if (!currentEditingGuestId || !dom.countHint) return;
+  
+  const guest = state.guests.find(g => g.id === currentEditingGuestId);
+  if (!guest) return;
+  
+  const namesCount = guest.names ? guest.names.length : 0;
+  const capacity = guest.count || 1;
+  const remaining = capacity - namesCount;
+  
+  if (remaining > 0) {
+    dom.countHint.textContent = `${namesCount} names added • ${remaining} slots available`;
+    dom.countHint.style.color = 'var(--text-secondary)';
+  } else if (remaining === 0) {
+    dom.countHint.textContent = `${namesCount} names added • All slots filled`;
+    dom.countHint.style.color = 'var(--success)';
+  } else {
+    dom.countHint.textContent = `⚠️ ${namesCount} names but only ${capacity} slots! Remove ${-remaining} name${-remaining > 1 ? 's' : ''}`;
+    dom.countHint.style.color = 'var(--danger)';
+  }
+}
+
+function onUpdateGroupCount() {
+  if (!currentEditingGuestId) return;
+  
+  const guest = state.guests.find(g => g.id === currentEditingGuestId);
+  if (!guest) return;
+  
+  const newCount = sanitizeInteger(dom.editGroupCount.value, 1);
+  const oldCount = guest.count || 1;
+  const namesCount = guest.names ? guest.names.length : 0;
+  
+  if (newCount < 1) {
+    showToast("Count must be at least 1");
+    dom.editGroupCount.value = oldCount;
+    return;
+  }
+  
+  // Check if decreasing and there are too many names
+  if (newCount < namesCount) {
+    showToast(`Cannot decrease to ${newCount}. Please remove ${namesCount - newCount} name${namesCount - newCount > 1 ? 's' : ''} first.`);
+    dom.editGroupCount.value = oldCount;
+    return;
+  }
+  
+  guest.count = newCount;
+  persistState();
+  updateCountHint();
+  renderGuestNamesList();
+  
+  if (newCount > oldCount) {
+    showToast(`Count increased to ${newCount}. You can now add ${newCount - namesCount} more name${newCount - namesCount > 1 ? 's' : ''}.`);
+  } else if (newCount < oldCount) {
+    showToast(`Count decreased to ${newCount}`);
+  } else {
+    showToast("Count updated");
+  }
+}
+
+function closeGuestNamesModal() {
+  currentEditingGuestId = null;
+  if (dom.guestNamesModal) {
+    dom.guestNamesModal.classList.remove("show");
+  }
+  // Refresh the guest list to show updated names
+  renderGuestList();
+}
+
+function renderGuestNamesList() {
+  if (!currentEditingGuestId) return;
+  
+  const guest = state.guests.find(g => g.id === currentEditingGuestId);
+  if (!guest) return;
+  
+  if (!guest.names) {
+    guest.names = [];
+  }
+  
+  updateCountHint();
+  
+  if (guest.names.length === 0) {
+    dom.guestNamesList.innerHTML = `<div class="muted text-center">No names added yet. Add names above.</div>`;
+    return;
+  }
+  
+  dom.guestNamesList.innerHTML = guest.names
+    .map((name, index) => `
+      <div class="guest-name-item">
+        <span class="guest-name-text">${escapeHtml(name)}</span>
+        <button class="btn-icon" data-action="remove-name" data-index="${index}">✕</button>
+      </div>
+    `)
+    .join("");
+}
+
+function onAddGuestName(event) {
+  event.preventDefault();
+  
+  if (!currentEditingGuestId) return;
+  
+  const guest = state.guests.find(g => g.id === currentEditingGuestId);
+  if (!guest) return;
+  
+  const formData = new FormData(dom.addGuestNameForm);
+  const name = sanitizeText(formData.get("guestName"));
+  
+  if (!name) return;
+  
+  if (!guest.names) {
+    guest.names = [];
+  }
+  
+  if (guest.names.length >= guest.count) {
+    showToast(`Maximum ${guest.count} names allowed. Increase group count to add more.`);
+    return;
+  }
+  
+  guest.names.push(name);
+  persistState();
+  
+  dom.addGuestNameForm.reset();
+  renderGuestNamesList();
+  showToast("Name added");
+}
+
+function onGuestNameAction(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+  
+  if (target.dataset.action !== "remove-name") {
+    return;
+  }
+  
+  const index = parseInt(target.dataset.index, 10);
+  if (!Number.isFinite(index) || !currentEditingGuestId) {
+    return;
+  }
+  
+  const guest = state.guests.find(g => g.id === currentEditingGuestId);
+  if (!guest || !guest.names) return;
+  
+  guest.names.splice(index, 1);
+  persistState();
+  renderGuestNamesList();
+  showToast("Name removed");
+}
+
 
 function onEventSelectionChanged() {
   state.selectedEventId = dom.eventSelect.value;
@@ -1428,11 +2156,26 @@ function onEventMetaChanged() {
     return;
   }
 
+  const oldName = event.name;
   event.name = dom.eventNameInput.value || "Untitled Function";
   event.date = dom.eventDateInput.value;
   event.venue = dom.eventVenueInput.value;
   event.notes = dom.eventNotesInput.value;
-  saveAndRender();
+  
+  persistState();
+  
+  // If name changed, update the select dropdown
+  if (oldName !== event.name) {
+    renderEventSelect();
+  }
+  
+  // Update countdown if Wedding event date changed
+  if (event.name.toLowerCase().includes("wedding")) {
+    updateCountdown();
+  }
+  
+  renderStats();
+  renderBudget();
 }
 
 function onInviteFilteredGuests() {
@@ -1448,6 +2191,17 @@ function onInviteFilteredGuests() {
 
   event.invitedGuestIds = Array.from(new Set([...event.invitedGuestIds, ...filtered]));
   saveAndRender("Guests invited");
+}
+
+function onSelectAllGuests() {
+  const event = currentEvent();
+  if (!event) {
+    return;
+  }
+
+  const allGuestIds = state.guests.map((guest) => guest.id);
+  event.invitedGuestIds = Array.from(new Set(allGuestIds));
+  saveAndRender("All guests invited");
 }
 
 function onClearInvites() {
@@ -1505,30 +2259,47 @@ function onApplyTraditionalScenario() {
   saveAndRender("Auto-invite applied");
 }
 
-function onInviteGuestToggle(event) {
-  const target = event.target;
-  if (!(target instanceof HTMLInputElement)) {
+function onInviteGuestToggle(e) {
+  const target = e.target;
+  
+  // Only handle checkbox inputs
+  if (!(target instanceof HTMLInputElement) || target.type !== "checkbox") {
     return;
   }
 
   const guestId = target.dataset.id;
   const eventItem = currentEvent();
+  
   if (!guestId || !eventItem) {
+    console.error("Missing guestId or eventItem", { guestId, eventItem });
     return;
   }
 
+  console.log("Toggle guest invitation", { guestId, checked: target.checked });
+
   if (target.checked) {
-    eventItem.invitedGuestIds = Array.from(new Set([...eventItem.invitedGuestIds, guestId]));
+    // Add guest to invited list
+    if (!eventItem.invitedGuestIds.includes(guestId)) {
+      eventItem.invitedGuestIds.push(guestId);
+    }
   } else {
+    // Remove guest from invited list
     eventItem.invitedGuestIds = eventItem.invitedGuestIds.filter((id) => id !== guestId);
   }
-  saveAndRender();
+  
+  persistState();
+  // Don't re-render everything, just update stats and keep checkboxes as-is
+  renderStats();
+  renderBudget();
+  showToast(target.checked ? "Guest invited" : "Guest removed");
 }
 
 function onTaskAdd(event) {
   event.preventDefault();
-  const eventItem = currentEvent();
-  if (!eventItem) {
+  
+  const selectedEvents = getSelectedEvents();
+  if (selectedEvents.length === 0) {
+    showToast("Please select at least one event");
     return;
   }
 
@@ -1538,16 +2309,23 @@ function onTaskAdd(event) {
     return;
   }
 
-  eventItem.tasks.push({
-    id: createId("task"),
+  const taskData = {
     title,
     owner: sanitizeText(formData.get("owner")),
     status: sanitizeTaskStatus(formData.get("status")),
     deadline: sanitizeText(formData.get("deadline")),
+  };
+
+  selectedEvents.forEach(eventItem => {
+    eventItem.tasks.push({
+      id: createId("task"),
+      ...taskData
+    });
   });
 
   dom.taskForm.reset();
-  saveAndRender("Task added");
+  const eventNames = selectedEvents.map(e => e.name).join(', ');
+  saveAndRender(`Task added to: ${eventNames}`);
 }
 
 function onTaskAction(event) {
@@ -1555,27 +2333,95 @@ function onTaskAction(event) {
   if (!(target instanceof HTMLElement)) {
     return;
   }
-  const eventItem = currentEvent();
-  if (!eventItem) {
-    return;
-  }
 
   const action = target.dataset.action;
   const id = target.dataset.id;
+  const eventId = target.dataset.eventId;
+  
   if (!action || !id) {
     return;
   }
 
   if (action === "remove-task") {
-    eventItem.tasks = eventItem.tasks.filter((task) => task.id !== id);
-    saveAndRender("Task removed");
+    const eventItem = state.events.find(e => e.id === eventId);
+    if (eventItem) {
+      eventItem.tasks = eventItem.tasks.filter((task) => task.id !== id);
+      saveAndRender("Task removed");
+    }
   }
 }
 
+function onVendorAdd(event) {
+  event.preventDefault();
+  
+  const selectedEvents = getSelectedEvents();
+  if (selectedEvents.length === 0) {
+    showToast("Please select at least one event");
+    return;
+  }
+
+  const formData = new FormData(dom.vendorForm);
+  const vendor = sanitizeText(formData.get("vendor"));
+  const service = sanitizeText(formData.get("service"));
+  if (!vendor || !service) {
+    return;
+  }
+
+  const vendorData = {
+    vendor,
+    service,
+    contact: sanitizeText(formData.get("contact")),
+    cost: sanitizeNumber(formData.get("cost")),
+    advance: sanitizeNumber(formData.get("advance")),
+    status: sanitizeVendorStatus(formData.get("status")),
+    notes: sanitizeText(formData.get("notes")),
+  };
+
+  selectedEvents.forEach(eventItem => {
+    if (!eventItem.vendors) {
+      eventItem.vendors = [];
+    }
+    eventItem.vendors.push({
+      id: createId("vendor"),
+      ...vendorData
+    });
+  });
+
+  dom.vendorForm.reset();
+  const eventNames = selectedEvents.map(e => e.name).join(', ');
+  saveAndRender(`Vendor booking added to: ${eventNames}`);
+}
+
+function onVendorAction(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const action = target.dataset.action;
+  const id = target.dataset.id;
+  const eventId = target.dataset.eventId;
+  
+  if (!action || !id) {
+    return;
+  }
+
+  if (action === "remove-vendor") {
+    const eventItem = state.events.find(e => e.id === eventId);
+    if (eventItem && eventItem.vendors) {
+      eventItem.vendors = eventItem.vendors.filter((vendor) => vendor.id !== id);
+      saveAndRender("Vendor booking removed");
+    }
+  }
+}
+
+
 function onMaterialAdd(event) {
   event.preventDefault();
-  const eventItem = currentEvent();
-  if (!eventItem) {
+  
+  const selectedEvents = getSelectedEvents();
+  if (selectedEvents.length === 0) {
+    showToast("Please select at least one event");
     return;
   }
 
@@ -1585,18 +2431,25 @@ function onMaterialAdd(event) {
     return;
   }
 
-  eventItem.materials.push({
-    id: createId("material"),
+  const materialData = {
     item,
     qty: sanitizeInteger(formData.get("qty"), 1),
     vendor: sanitizeText(formData.get("vendor")),
     status: sanitizeMaterialStatus(formData.get("status")),
     cost: sanitizeNumber(formData.get("cost")),
     advance: sanitizeNumber(formData.get("advance")),
+  };
+
+  selectedEvents.forEach(eventItem => {
+    eventItem.materials.push({
+      id: createId("material"),
+      ...materialData
+    });
   });
 
   dom.materialForm.reset();
-  saveAndRender("Material added");
+  const eventNames = selectedEvents.map(e => e.name).join(', ');
+  saveAndRender(`Material added to: ${eventNames}`);
 }
 
 function onMaterialAction(event) {
@@ -1604,27 +2457,29 @@ function onMaterialAction(event) {
   if (!(target instanceof HTMLElement)) {
     return;
   }
-  const eventItem = currentEvent();
-  if (!eventItem) {
-    return;
-  }
 
   const action = target.dataset.action;
   const id = target.dataset.id;
+  const eventId = target.dataset.eventId;
   if (!action || !id) {
     return;
   }
 
   if (action === "remove-material") {
-    eventItem.materials = eventItem.materials.filter((material) => material.id !== id);
-    saveAndRender("Material removed");
+    const eventItem = state.events.find(e => e.id === eventId);
+    if (eventItem) {
+      eventItem.materials = eventItem.materials.filter((material) => material.id !== id);
+      saveAndRender("Material removed");
+    }
   }
 }
 
 function onFoodAdd(event) {
   event.preventDefault();
-  const eventItem = currentEvent();
-  if (!eventItem) {
+  
+  const selectedEvents = getSelectedEvents();
+  if (selectedEvents.length === 0) {
+    showToast("Please select at least one event");
     return;
   }
 
@@ -1634,18 +2489,25 @@ function onFoodAdd(event) {
     return;
   }
 
-  eventItem.food.push({
-    id: createId("food"),
+  const foodData = {
     dish,
     course: sanitizeText(formData.get("course")),
     vendor: sanitizeText(formData.get("vendor")),
     servings: sanitizeInteger(formData.get("servings"), 0),
     cost: sanitizeNumber(formData.get("cost")),
     advance: sanitizeNumber(formData.get("advance")),
+  };
+
+  selectedEvents.forEach(eventItem => {
+    eventItem.food.push({
+      id: createId("food"),
+      ...foodData
+    });
   });
 
   dom.foodForm.reset();
-  saveAndRender("Food item added");
+  const eventNames = selectedEvents.map(e => e.name).join(', ');
+  saveAndRender(`Food item added to: ${eventNames}`);
 }
 
 function onFoodAction(event) {
@@ -1658,19 +2520,24 @@ function onFoodAction(event) {
   }
 
   const id = target.dataset.id;
-  const eventItem = currentEvent();
-  if (!id || !eventItem) {
+  const eventId = target.dataset.eventId;
+  if (!id) {
     return;
   }
 
-  eventItem.food = eventItem.food.filter((food) => food.id !== id);
-  saveAndRender("Food item removed");
+  const eventItem = state.events.find(e => e.id === eventId);
+  if (eventItem) {
+    eventItem.food = eventItem.food.filter((food) => food.id !== id);
+    saveAndRender("Food item removed");
+  }
 }
 
 function onDecorAdd(event) {
   event.preventDefault();
-  const eventItem = currentEvent();
-  if (!eventItem) {
+  
+  const selectedEvents = getSelectedEvents();
+  if (selectedEvents.length === 0) {
+    showToast("Please select at least one event");
     return;
   }
 
@@ -1680,18 +2547,25 @@ function onDecorAdd(event) {
     return;
   }
 
-  eventItem.decor.push({
-    id: createId("decor"),
+  const decorData = {
     element,
     vendor: sanitizeText(formData.get("vendor")),
     theme: sanitizeText(formData.get("theme")),
     status: sanitizeDecorStatus(formData.get("status")),
     cost: sanitizeNumber(formData.get("cost")),
     advance: sanitizeNumber(formData.get("advance")),
+  };
+
+  selectedEvents.forEach(eventItem => {
+    eventItem.decor.push({
+      id: createId("decor"),
+      ...decorData
+    });
   });
 
   dom.decorForm.reset();
-  saveAndRender("Decor added");
+  const eventNames = selectedEvents.map(e => e.name).join(', ');
+  saveAndRender(`Decor added to: ${eventNames}`);
 }
 
 function onDecorAction(event) {
@@ -1699,27 +2573,29 @@ function onDecorAction(event) {
   if (!(target instanceof HTMLElement)) {
     return;
   }
-  const eventItem = currentEvent();
-  if (!eventItem) {
-    return;
-  }
 
   const action = target.dataset.action;
   const id = target.dataset.id;
+  const eventId = target.dataset.eventId;
   if (!action || !id) {
     return;
   }
 
   if (action === "remove-decor") {
-    eventItem.decor = eventItem.decor.filter((decor) => decor.id !== id);
-    saveAndRender("Decor item removed");
+    const eventItem = state.events.find(e => e.id === eventId);
+    if (eventItem) {
+      eventItem.decor = eventItem.decor.filter((decor) => decor.id !== id);
+      saveAndRender("Decor item removed");
+    }
   }
 }
 
 function onDjAdd(event) {
   event.preventDefault();
-  const eventItem = currentEvent();
-  if (!eventItem) {
+  
+  const selectedEvents = getSelectedEvents();
+  if (selectedEvents.length === 0) {
+    showToast("Please select at least one event");
     return;
   }
 
@@ -1729,18 +2605,25 @@ function onDjAdd(event) {
     return;
   }
 
-  eventItem.dj.push({
-    id: createId("dj"),
+  const djData = {
     slot,
     performer: sanitizeText(formData.get("performer")),
     type: sanitizeText(formData.get("type")),
     notes: sanitizeText(formData.get("notes")),
     cost: sanitizeNumber(formData.get("cost")),
     advance: sanitizeNumber(formData.get("advance")),
+  };
+
+  selectedEvents.forEach(eventItem => {
+    eventItem.dj.push({
+      id: createId("dj"),
+      ...djData
+    });
   });
 
   dom.djForm.reset();
-  saveAndRender("Entertainment added");
+  const eventNames = selectedEvents.map(e => e.name).join(', ');
+  saveAndRender(`Entertainment added to: ${eventNames}`);
 }
 
 function onDjAction(event) {
@@ -1753,19 +2636,24 @@ function onDjAction(event) {
   }
 
   const id = target.dataset.id;
-  const eventItem = currentEvent();
-  if (!id || !eventItem) {
+  const eventId = target.dataset.eventId;
+  if (!id) {
     return;
   }
 
-  eventItem.dj = eventItem.dj.filter((dj) => dj.id !== id);
-  saveAndRender("Entertainment item removed");
+  const eventItem = state.events.find(e => e.id === eventId);
+  if (eventItem) {
+    eventItem.dj = eventItem.dj.filter((dj) => dj.id !== id);
+    saveAndRender("Entertainment item removed");
+  }
 }
 
 function onFavorAdd(event) {
   event.preventDefault();
-  const eventItem = currentEvent();
-  if (!eventItem) {
+  
+  const selectedEvents = getSelectedEvents();
+  if (selectedEvents.length === 0) {
+    showToast("Please select at least one event");
     return;
   }
 
@@ -1775,8 +2663,7 @@ function onFavorAdd(event) {
     return;
   }
 
-  eventItem.favors.push({
-    id: createId("favor"),
+  const favorData = {
     item,
     qty: sanitizeInteger(formData.get("qty"), 1),
     vendor: sanitizeText(formData.get("vendor")),
@@ -1784,10 +2671,18 @@ function onFavorAdd(event) {
     notes: sanitizeText(formData.get("notes")),
     cost: sanitizeNumber(formData.get("cost")),
     advance: sanitizeNumber(formData.get("advance")),
+  };
+
+  selectedEvents.forEach(eventItem => {
+    eventItem.favors.push({
+      id: createId("favor"),
+      ...favorData
+    });
   });
 
   dom.favorForm.reset();
-  saveAndRender("Favor added");
+  const eventNames = selectedEvents.map(e => e.name).join(', ');
+  saveAndRender(`Favor added to: ${eventNames}`);
 }
 
 function onFavorAction(event) {
@@ -1800,13 +2695,16 @@ function onFavorAction(event) {
   }
 
   const id = target.dataset.id;
-  const eventItem = currentEvent();
-  if (!id || !eventItem) {
+  const eventId = target.dataset.eventId;
+  if (!id) {
     return;
   }
 
-  eventItem.favors = eventItem.favors.filter((favor) => favor.id !== id);
-  saveAndRender("Favor removed");
+  const eventItem = state.events.find(e => e.id === eventId);
+  if (eventItem) {
+    eventItem.favors = eventItem.favors.filter((favor) => favor.id !== id);
+    saveAndRender("Favor removed");
+  }
 }
 
 function saveAndRender(statusText) {
@@ -1874,4 +2772,634 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+// Print helper: open window with content and trigger print
+function openPrintWindow(title, bodyHtml) {
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    showToast("Please allow pop-ups to print");
+    return;
+  }
+  printWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 20px; color: #1a1a1a; max-width: 1200px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin-bottom: 8px; }
+    h2 { font-size: 1.2rem; margin: 16px 0 8px; }
+    h3 { font-size: 1.1rem; margin: 12px 0 6px; }
+    h4 { font-size: 1rem; margin: 10px 0 5px; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f5f5f5; font-weight: 600; }
+    .muted { color: #666; }
+    .text-right { text-align: right; }
+    ul { margin: 5px 0; padding-left: 20px; }
+    .print-controls { 
+      position: fixed; 
+      top: 10px; 
+      right: 10px; 
+      background: white; 
+      padding: 10px; 
+      border: 2px solid #00d4ff; 
+      border-radius: 8px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+    }
+    .print-btn {
+      background: #00d4ff;
+      color: #1a1a1a;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 5px;
+    }
+    .print-btn:hover {
+      background: #00b8e6;
+    }
+    .close-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .close-btn:hover {
+      background: #dc2626;
+    }
+    @media print { 
+      body { padding: 0; max-width: 100%; }
+      .print-controls { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-controls">
+    <button class="print-btn" onclick="window.print()">🖨️ Print</button>
+    <button class="close-btn" onclick="window.close()">✕ Close</button>
+  </div>
+  ${bodyHtml}
+</body>
+</html>`);
+  printWindow.document.close();
+  printWindow.focus();
+}
+
+// ========== INVITATIONS MANAGEMENT ==========
+
+function renderInvitationsList() {
+  if (!dom.invitationsList) return;
+  
+  const filter = dom.invitationFilterSelect ? dom.invitationFilterSelect.value : "all";
+  let guests = state.guests;
+  
+  // Apply filters
+  if (filter === "sent") {
+    guests = guests.filter(g => g.invitationSent === true);
+  } else if (filter === "pending") {
+    guests = guests.filter(g => g.invitationSent !== true);
+  } else if (filter !== "all") {
+    guests = guests.filter(g => g.group === filter);
+  }
+  
+  // Update stats
+  const totalGuests = state.guests.length;
+  const sentCount = state.guests.filter(g => g.invitationSent === true).length;
+  const pendingCount = totalGuests - sentCount;
+  
+  if (dom.invitationsSent) dom.invitationsSent.textContent = sentCount;
+  if (dom.invitationsPending) dom.invitationsPending.textContent = pendingCount;
+  if (dom.invitationsTotal) dom.invitationsTotal.textContent = totalGuests;
+  
+  if (!guests.length) {
+    dom.invitationsList.innerHTML = `<div class="empty-state">
+      <p>No guests match the current filter.</p>
+    </div>`;
+    return;
+  }
+  
+  let html = "";
+  guests.forEach(g => {
+    const statusClass = g.invitationSent ? "sent" : "pending";
+    const statusText = g.invitationSent ? "Sent" : "Pending";
+    const toggleText = g.invitationSent ? "Mark Pending" : "Mark Sent";
+    const groupLabel = getGroupLabel(g.group);
+    
+    html += `
+    <div class="invitation-item ${statusClass}" data-guest-id="${g.id}">
+      <div class="invitation-info">
+        <div class="invitation-name">${escapeHtml(g.name)}</div>
+        <div class="invitation-details">
+          <span>👥 ${g.count} ${g.count === 1 ? 'guest' : 'guests'}</span>
+          <span>•</span>
+          <span>${groupLabel}</span>
+          ${g.phone ? `<span>•</span><span>📞 ${escapeHtml(g.phone)}</span>` : ''}
+        </div>
+      </div>
+      <div class="invitation-actions">
+        <span class="invitation-status ${statusClass}">${statusText}</span>
+        <button 
+          class="btn-toggle-sent" 
+          data-action="toggle-sent" 
+          data-guest-id="${g.id}">
+          ${toggleText}
+        </button>
+      </div>
+    </div>`;
+  });
+  
+  dom.invitationsList.innerHTML = html;
+}
+
+function onInvitationAction(e) {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  
+  const action = btn.dataset.action;
+  const guestId = btn.dataset.guestId;
+  
+  if (action === "toggle-sent") {
+    const guest = state.guests.find(g => g.id === guestId);
+    if (!guest) return;
+    
+    guest.invitationSent = !guest.invitationSent;
+    persistState();
+    renderInvitationsList();
+    
+    const status = guest.invitationSent ? "sent" : "pending";
+    showToast(`Invitation marked as ${status} for ${guest.name}`);
+  }
+}
+
+function onMarkAllSent() {
+  state.guests.forEach(g => {
+    g.invitationSent = true;
+  });
+  persistState();
+  renderInvitationsList();
+  showToast("All invitations marked as sent!");
+}
+
+function onMarkAllPending() {
+  state.guests.forEach(g => {
+    g.invitationSent = false;
+  });
+  persistState();
+  renderInvitationsList();
+  showToast("All invitations marked as pending!");
+}
+
+function getGroupLabel(group) {
+  const labels = {
+    family: "Family",
+    girlfriend: "Friends (Bride)",
+    friends: "Friends (Groom)",
+    cousins: "Extended Family",
+    colleagues: "Colleagues",
+    vip: "Special Guests"
+  };
+  return labels[group] || "Other";
+}
+
+function printInvitations() {
+  const title = (state.meta.coupleName || "Wedding") + " – Invitation Tracking";
+  
+  const totalGuests = state.guests.length;
+  const sentCount = state.guests.filter(g => g.invitationSent === true).length;
+  const pendingCount = totalGuests - sentCount;
+  
+  let rows = "";
+  if (!state.guests.length) {
+    rows = "<tr><td colspan='5' class='muted'>No guests added yet.</td></tr>";
+  } else {
+    state.guests.forEach((g) => {
+      const statusText = g.invitationSent ? "✅ Sent" : "⏳ Pending";
+      const groupLabel = getGroupLabel(g.group);
+      
+      rows += `<tr>
+        <td>${escapeHtml(g.name)}</td>
+        <td>${g.count}</td>
+        <td>${groupLabel}</td>
+        <td>${g.phone ? escapeHtml(g.phone) : '—'}</td>
+        <td><strong>${statusText}</strong></td>
+      </tr>`;
+    });
+  }
+  
+  const bodyHtml = `
+  <div class="print-section">
+    <h1>${escapeHtml(title)}</h1>
+    <div class="summary-box">
+      <p><strong>Total Groups:</strong> ${totalGuests}</p>
+      <p><strong>Invitations Sent:</strong> ${sentCount}</p>
+      <p><strong>Pending:</strong> ${pendingCount}</p>
+      <p><strong>Completion:</strong> ${totalGuests > 0 ? Math.round((sentCount / totalGuests) * 100) : 0}%</p>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Guest Group</th>
+          <th>Count</th>
+          <th>Group</th>
+          <th>Phone</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>
+  </div>`;
+  
+  openPrintWindow(title, bodyHtml);
+}
+
+function printGuestList() {
+  const title = (state.meta.coupleName || "Wedding") + " – Guest List";
+  let rows = "";
+  if (!state.guests.length) {
+    rows = "<tr><td colspan='5' class='muted'>No guests added yet.</td></tr>";
+  } else {
+    state.guests.forEach((g) => {
+      const count = g.count || 1;
+      const names = g.names && g.names.length > 0 ? g.names.join(', ') : '—';
+      rows += `<tr>
+        <td>${escapeHtml(g.name)}</td>
+        <td>${count}</td>
+        <td>${escapeHtml(formatGroupLabel(g.group))}</td>
+        <td style="max-width: 300px; word-wrap: break-word;">${escapeHtml(names)}</td>
+        <td>${escapeHtml(g.phone || "—")}</td>
+      </tr>`;
+    });
+  }
+  const bodyHtml = `
+    <h1>${escapeHtml(title)}</h1>
+    <p class="muted">Printed ${new Date().toLocaleDateString()}</p>
+    <table>
+      <thead><tr><th>Group Name</th><th>Count</th><th>Group</th><th>Individual Names</th><th>Phone</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p><strong>Total: ${state.guests.reduce((s, g) => s + (g.count || 1), 0)} guests</strong></p>`;
+  openPrintWindow(title, bodyHtml);
+}
+
+function printEvents() {
+  const title = (state.meta.coupleName || "Wedding") + " – Events & Invitees";
+  let sections = "";
+  state.events.forEach((event) => {
+    const invitedGuests = event.invitedGuestIds
+      .map((id) => state.guests.find((g) => g.id === id))
+      .filter(Boolean);
+    
+    const totalHeadCount = invitedGuests.reduce((sum, guest) => sum + (guest.count || 1), 0);
+    const invitedGroupsCount = invitedGuests.length;
+    
+    let inviteesTable = "";
+    if (invitedGuests.length > 0) {
+      let rows = invitedGuests
+        .map((guest) => {
+          const count = guest.count || 1;
+          return `<tr>
+            <td>${escapeHtml(guest.name)}</td>
+            <td>${escapeHtml(formatGroupLabel(guest.group))}</td>
+            <td class="text-right">${count}</td>
+            <td>${escapeHtml(guest.phone || "—")}</td>
+          </tr>`;
+        })
+        .join("");
+      
+      inviteesTable = `
+        <table>
+          <thead>
+            <tr>
+              <th>Guest Group</th>
+              <th>Group</th>
+              <th class="text-right">Head Count</th>
+              <th>Phone</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+          <tfoot>
+            <tr style="font-weight: bold; background: #f0f0f0;">
+              <td colspan="2">Total</td>
+              <td class="text-right">${totalHeadCount}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>`;
+    } else {
+      inviteesTable = `<p class="muted">No guests invited yet</p>`;
+    }
+    
+    sections += `
+    <div style="page-break-inside: avoid; margin-bottom: 30px;">
+      <h2>${escapeHtml(event.name)}</h2>
+      <p><strong>Date:</strong> ${escapeHtml(event.date || "—")} &nbsp;&nbsp; <strong>Venue:</strong> ${escapeHtml(event.venue || "—")}</p>
+      ${event.notes ? `<p><strong>Notes:</strong> ${escapeHtml(event.notes)}</p>` : ""}
+      <p><strong>Invited:</strong> ${invitedGroupsCount} ${invitedGroupsCount === 1 ? 'group' : 'groups'} • ${totalHeadCount} ${totalHeadCount === 1 ? 'person' : 'people'}</p>
+      ${inviteesTable}
+    </div>`;
+  });
+  const bodyHtml = `<h1>${escapeHtml(title)}</h1><p class="muted">Printed ${new Date().toLocaleDateString()}</p>${sections}`;
+  openPrintWindow(title, bodyHtml);
+}
+
+function printBudget() {
+  const title = (state.meta.coupleName || "Wedding") + " – Budget Summary";
+  const totalBudget = sanitizeNumber(state.meta.totalBudget) || 20000;
+  const totalSpent = calculateTotalSpent();
+  const remaining = totalBudget - totalSpent;
+  const percent = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
+  let eventRows = "";
+  state.events.forEach((event) => {
+    const total = eventCost(event);
+    const spent = eventSpent(event);
+    eventRows += `<tr><td>${escapeHtml(event.name)}</td><td class="text-right">${formatCAD(total)}</td><td class="text-right">${formatCAD(spent)}</td></tr>`;
+  });
+  const bodyHtml = `
+    <h1>${escapeHtml(title)}</h1>
+    <p class="muted">Printed ${new Date().toLocaleDateString()}</p>
+    <table>
+      <tr><th>Total Budget</th><td class="text-right">${formatCAD(totalBudget)}</td></tr>
+      <tr><th>Total Spent</th><td class="text-right">${formatCAD(totalSpent)}</td></tr>
+      <tr><th>Remaining</th><td class="text-right">${formatCAD(remaining)}</td></tr>
+      <tr><th>% Used</th><td class="text-right">${percent}%</td></tr>
+    </table>
+    <h2>By Event</h2>
+    <table>
+      <thead><tr><th>Event</th><th class="text-right">Total</th><th class="text-right">Paid</th></tr></thead>
+      <tbody>${eventRows}</tbody>
+    </table>
+    <h2>By Category</h2>
+    <table>
+      <tr><td>Vendors</td><td class="text-right">${formatCAD(state.events.reduce((s, e) => s + (e.vendors ? e.vendors.reduce((sum, i) => sum + sanitizeNumber(i.cost), 0) : 0), 0))}</td></tr>
+      <tr><td>Materials</td><td class="text-right">${formatCAD(state.events.reduce((s, e) => s + e.materials.reduce((sum, i) => sum + sanitizeNumber(i.cost), 0), 0))}</td></tr>
+      <tr><td>Food</td><td class="text-right">${formatCAD(state.events.reduce((s, e) => s + e.food.reduce((sum, i) => sum + sanitizeNumber(i.cost), 0), 0))}</td></tr>
+      <tr><td>Decor</td><td class="text-right">${formatCAD(state.events.reduce((s, e) => s + e.decor.reduce((sum, i) => sum + sanitizeNumber(i.cost), 0), 0))}</td></tr>
+      <tr><td>Entertainment</td><td class="text-right">${formatCAD(state.events.reduce((s, e) => s + e.dj.reduce((sum, i) => sum + sanitizeNumber(i.cost), 0), 0))}</td></tr>
+      <tr><td>Favors</td><td class="text-right">${formatCAD(state.events.reduce((s, e) => s + e.favors.reduce((sum, i) => sum + sanitizeNumber(i.cost), 0), 0))}</td></tr>
+    </table>`;
+  openPrintWindow(title, bodyHtml);
+}
+
+function printExpenses() {
+  const title = (state.meta.coupleName || "Wedding") + " – Expenses / Vendor Payments";
+  const vendors = getAllVendorPayments();
+  let rows = "";
+  if (!vendors.length) {
+    rows = "<tr><td colspan='5' class='muted'>No vendor payments recorded.</td></tr>";
+  } else {
+    vendors.forEach((v) => {
+      const pending = v.total - v.paid;
+      rows += `<tr>
+        <td>${escapeHtml(v.vendor)}</td>
+        <td>${escapeHtml(v.category)}</td>
+        <td>${escapeHtml(v.event)}</td>
+        <td class="text-right">${formatCAD(v.total)}</td>
+        <td class="text-right">${formatCAD(v.paid)}</td>
+        <td class="text-right">${formatCAD(pending)}</td>
+      </tr>`;
+    });
+  }
+  const bodyHtml = `
+    <h1>${escapeHtml(title)}</h1>
+    <p class="muted">Printed ${new Date().toLocaleDateString()}</p>
+    <table>
+      <thead><tr><th>Vendor</th><th>Category</th><th>Event</th><th class="text-right">Total</th><th class="text-right">Paid</th><th class="text-right">Pending</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  openPrintWindow(title, bodyHtml);
+}
+
+function printMasterPlan() {
+  const title = (state.meta.coupleName || "Wedding") + " – Master Wedding Plan";
+  const weddingDate = state.meta.weddingDate || "Not set";
+  const venue = state.meta.primaryVenue || "Not set";
+  const totalBudget = sanitizeNumber(state.meta.totalBudget) || 20000;
+  const totalSpent = calculateTotalSpent();
+  const totalCost = calculateTotalCost();
+  const remaining = totalBudget - totalSpent;
+  const totalGuests = state.guests.reduce((s, g) => s + (g.count || 1), 0);
+  
+  // Keep events in the order they were added (not sorted by date)
+  const sortedEvents = state.events;
+  
+  // Budget Overview
+  const budgetOverview = `
+    <div style="page-break-inside: avoid; margin-bottom: 30px;">
+      <h2 style="color: #00d4ff; border-bottom: 2px solid #00d4ff; padding-bottom: 8px;">Budget Overview</h2>
+      <table>
+        <tr><th>Total Budget</th><td class="text-right"><strong>${formatCAD(totalBudget)}</strong></td></tr>
+        <tr><th>Total Cost (Estimated)</th><td class="text-right">${formatCAD(totalCost)}</td></tr>
+        <tr><th>Total Spent (Paid)</th><td class="text-right">${formatCAD(totalSpent)}</td></tr>
+        <tr><th>Remaining Budget</th><td class="text-right" style="color: ${remaining < 0 ? '#ef4444' : '#10b981'}"><strong>${formatCAD(remaining)}</strong></td></tr>
+        <tr><th>Budget Used</th><td class="text-right">${Math.round((totalSpent / totalBudget) * 100)}%</td></tr>
+      </table>
+    </div>`;
+  
+  // Guest Summary
+  const guestSummary = `
+    <div style="page-break-inside: avoid; margin-bottom: 30px;">
+      <h2 style="color: #00d4ff; border-bottom: 2px solid #00d4ff; padding-bottom: 8px;">Guest Summary</h2>
+      <p><strong>Total Guests:</strong> ${totalGuests} people across ${state.guests.length} groups</p>
+      <table>
+        <thead><tr><th>Group Name</th><th>Count</th><th>Group</th><th>Names</th></tr></thead>
+        <tbody>
+          ${state.guests.map(g => {
+            const names = g.names && g.names.length > 0 ? g.names.join(', ') : '—';
+            return `<tr>
+              <td>${escapeHtml(g.name)}</td>
+              <td>${g.count || 1}</td>
+              <td>${escapeHtml(formatGroupLabel(g.group))}</td>
+              <td style="max-width: 300px; word-wrap: break-word;">${escapeHtml(names)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  
+  // Events Detail
+  let eventsDetail = '';
+  sortedEvents.forEach(event => {
+    const eventDate = event.date || 'Date not set';
+    const eventVenue = event.venue || 'Venue not set';
+    const invitedGuests = event.invitedGuestIds
+      .map(id => state.guests.find(g => g.id === id))
+      .filter(Boolean);
+    const totalHeadCount = invitedGuests.reduce((sum, g) => sum + (g.count || 1), 0);
+    const eventTotal = eventCost(event);
+    const eventPaid = eventSpent(event);
+    const eventPending = eventTotal - eventPaid;
+    
+    eventsDetail += `
+      <div style="page-break-inside: avoid; margin-bottom: 40px; border: 2px solid #00d4ff; padding: 20px; border-radius: 8px;">
+        <h2 style="color: #a855f7; margin-top: 0;">${escapeHtml(event.name)}</h2>
+        <p><strong>📅 Date:</strong> ${escapeHtml(eventDate)} &nbsp;&nbsp; <strong>📍 Venue:</strong> ${escapeHtml(eventVenue)}</p>
+        ${event.notes ? `<p><strong>📝 Notes:</strong> ${escapeHtml(event.notes)}</p>` : ''}
+        
+        <h3 style="color: #00d4ff; margin-top: 20px;">👥 Invited Guests (${totalHeadCount} people)</h3>
+        ${invitedGuests.length > 0 ? `
+          <table>
+            <thead><tr><th>Group</th><th>Count</th><th>Names</th></tr></thead>
+            <tbody>
+              ${invitedGuests.map(g => {
+                const names = g.names && g.names.length > 0 ? g.names.join(', ') : '—';
+                return `<tr>
+                  <td>${escapeHtml(g.name)}</td>
+                  <td>${g.count || 1}</td>
+                  <td style="max-width: 250px; word-wrap: break-word;">${escapeHtml(names)}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        ` : '<p class="muted">No guests invited yet</p>'}
+        
+        <h3 style="color: #00d4ff; margin-top: 20px;">💰 Budget & Expenses</h3>
+        <table>
+          <tr><th>Total Cost</th><td class="text-right">${formatCAD(eventTotal)}</td></tr>
+          <tr><th>Paid</th><td class="text-right">${formatCAD(eventPaid)}</td></tr>
+          <tr><th>Pending</th><td class="text-right">${formatCAD(eventPending)}</td></tr>
+        </table>
+        
+        ${event.vendors && event.vendors.length > 0 ? `
+          <h4 style="margin-top: 15px;">📞 Vendors</h4>
+          <table>
+            <thead><tr><th>Vendor</th><th>Service</th><th>Contact</th><th>Status</th><th class="text-right">Cost</th></tr></thead>
+            <tbody>
+              ${event.vendors.map(v => `<tr>
+                <td>${escapeHtml(v.vendor)}</td>
+                <td>${escapeHtml(v.service)}</td>
+                <td>${escapeHtml(v.contact || '—')}</td>
+                <td>${formatVendorStatus(v.status)}</td>
+                <td class="text-right">${formatCAD(v.cost)}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        ` : ''}
+        
+        ${event.tasks && event.tasks.length > 0 ? `
+          <h4 style="margin-top: 15px;">✅ Tasks</h4>
+          <ul style="margin: 5px 0; padding-left: 20px;">
+            ${event.tasks.map(t => `<li>${escapeHtml(t.title)} - <em>${formatTaskStatus(t.status)}</em>${t.owner ? ` (${escapeHtml(t.owner)})` : ''}</li>`).join('')}
+          </ul>
+        ` : ''}
+        
+        ${event.food && event.food.length > 0 ? `
+          <h4 style="margin-top: 15px;">🍽️ Food & Catering</h4>
+          <ul style="margin: 5px 0; padding-left: 20px;">
+            ${event.food.map(f => `<li>${escapeHtml(f.dish)}${f.course ? ` (${escapeHtml(f.course)})` : ''} - ${formatCAD(f.cost)}</li>`).join('')}
+          </ul>
+        ` : ''}
+        
+        ${event.decor && event.decor.length > 0 ? `
+          <h4 style="margin-top: 15px;">🌸 Decor</h4>
+          <ul style="margin: 5px 0; padding-left: 20px;">
+            ${event.decor.map(d => `<li>${escapeHtml(d.element)}${d.theme ? ` (${escapeHtml(d.theme)})` : ''} - ${formatCAD(d.cost)}</li>`).join('')}
+          </ul>
+        ` : ''}
+        
+        ${event.dj && event.dj.length > 0 ? `
+          <h4 style="margin-top: 15px;">🎵 Entertainment</h4>
+          <ul style="margin: 5px 0; padding-left: 20px;">
+            ${event.dj.map(dj => `<li>${escapeHtml(dj.slot)} - ${escapeHtml(dj.performer)} (${escapeHtml(dj.type)}) - ${formatCAD(dj.cost)}</li>`).join('')}
+          </ul>
+        ` : ''}
+        
+        ${event.favors && event.favors.length > 0 ? `
+          <h4 style="margin-top: 15px;">🎁 Party Favors</h4>
+          <ul style="margin: 5px 0; padding-left: 20px;">
+            ${event.favors.map(f => `<li>${escapeHtml(f.item)} (Qty: ${f.qty}) - ${formatCAD(f.cost)}</li>`).join('')}
+          </ul>
+        ` : ''}
+      </div>
+    `;
+  });
+  
+  // Collect all materials from all events for separate page
+  const allMaterials = [];
+  state.events.forEach(event => {
+    if (event.materials && event.materials.length > 0) {
+      event.materials.forEach(material => {
+        allMaterials.push({
+          ...material,
+          eventName: event.name
+        });
+      });
+    }
+  });
+  
+  const materialsPage = allMaterials.length > 0 ? `
+    <div style="page-break-before: always; margin-top: 40px;">
+      <h2 style="color: #00d4ff; border-bottom: 2px solid #00d4ff; padding-bottom: 8px;">📦 Materials & Supplies Master List</h2>
+      <p style="margin-bottom: 20px;"><strong>Total Items:</strong> ${allMaterials.length}</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Item Name</th>
+            <th>Quantity</th>
+            <th>Vendor</th>
+            <th>Status</th>
+            <th class="text-right">Total Cost</th>
+            <th class="text-right">Advance Paid</th>
+            <th class="text-right">Pending</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${allMaterials.map(m => {
+            const cost = sanitizeNumber(m.cost);
+            const advance = sanitizeNumber(m.advance);
+            const pending = cost - advance;
+            return `<tr>
+              <td><strong>${escapeHtml(m.eventName)}</strong></td>
+              <td>${escapeHtml(m.item)}</td>
+              <td>${m.qty}</td>
+              <td>${escapeHtml(m.vendor || '—')}</td>
+              <td>${formatMaterialStatus(m.status)}</td>
+              <td class="text-right">${formatCAD(cost)}</td>
+              <td class="text-right">${formatCAD(advance)}</td>
+              <td class="text-right">${formatCAD(pending)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+        <tfoot>
+          <tr style="font-weight: bold; background: #f0f0f0;">
+            <td colspan="5">Total</td>
+            <td class="text-right">${formatCAD(allMaterials.reduce((sum, m) => sum + sanitizeNumber(m.cost), 0))}</td>
+            <td class="text-right">${formatCAD(allMaterials.reduce((sum, m) => sum + sanitizeNumber(m.advance), 0))}</td>
+            <td class="text-right">${formatCAD(allMaterials.reduce((sum, m) => sum + (sanitizeNumber(m.cost) - sanitizeNumber(m.advance)), 0))}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  ` : '';
+  
+  const bodyHtml = `
+    <div style="text-align: center; margin-bottom: 40px;">
+      <h1 style="font-size: 2rem; color: #00d4ff; margin: 0;">${escapeHtml(title)}</h1>
+      <p style="font-size: 1.1rem; color: #a855f7; margin: 10px 0 5px;">${escapeHtml(state.meta.coupleName || 'Wedding Planning')}</p>
+      <p style="color: #666; margin: 0;">📅 ${escapeHtml(weddingDate)} &nbsp;•&nbsp; 📍 ${escapeHtml(venue)}</p>
+      <p class="muted" style="margin-top: 10px;">Generated ${new Date().toLocaleDateString()}</p>
+    </div>
+    
+    ${budgetOverview}
+    ${guestSummary}
+    
+    <h2 style="color: #00d4ff; border-bottom: 2px solid #00d4ff; padding-bottom: 8px; margin-top: 40px;">Event Details</h2>
+    ${eventsDetail}
+    
+    ${materialsPage}
+  `;
+  
+  openPrintWindow(title, bodyHtml);
 }
